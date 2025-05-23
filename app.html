@@ -341,73 +341,57 @@
             <p id="upload-status"></p>
         </div>
 
-        <h2 class="section-title">選擇語言</h2>
-        <div class="language-grid">
-            <div class="language-card" data-language="中文">
-                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="中文">
-                <div class="card-text">中文</div>
+        <div id="main-content" style="display: none;">
+            <h2 class="section-title">選擇語言</h2>
+            <div class="language-grid">
+                <div class="language-card" data-language="中文">
+                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="中文">
+                    <div class="card-text">中文</div>
+                </div>
+                <div class="language-card" data-language="英文">
+                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="英文">
+                    <div class="card-text">英文</div>
+                </div>
+                <div class="language-card" data-language="日文">
+                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="日文">
+                    <div class="card-text">日文</div>
+                </div>
+                <div class="language-card" data-language="韓文">
+                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="韓文">
+                    <div class="card-text">韓文</div>
+                </div>
             </div>
-            <div class="language-card" data-language="英文">
-                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="英文">
-                <div class="card-text">英文</div>
-            </div>
-            <div class="language-card" data-language="日文">
-                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="日文">
-                <div class="card-text">日文</div>
-            </div>
-            <div class="language-card" data-language="韓文">
-                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="韓文">
-                <div class="card-text">韓文</div>
-            </div>
-        </div>
 
-        <h2 class="section-title">今日心情</h2>
-        <div class="mood-grid">
-            <div class="mood-card" data-mood="很開心">
-                <div class="mood-emoji">😄</div>
-                <div class="mood-label">很開心</div>
+            <h2 class="section-title">今日心情</h2>
+            <div id="mood-grid" class="mood-grid">
+                <!-- 情緒卡片將由 JavaScript 動態生成 -->
             </div>
-            <div class="mood-card" data-mood="開心">
-                <div class="mood-emoji">😊</div>
-                <div class="mood-label">開心</div>
-            </div>
-            <div class="mood-card" data-mood="普通">
-                <div class="mood-emoji">😐</div>
-                <div class="mood-label">普通</div>
-            </div>
-            <div class="mood-card" data-mood="不開心">
-                <div class="mood-emoji">😢</div>
-                <div class="mood-label">不開心</div>
-            </div>
-            <div class="mood-card" data-mood="生氣">
-                <div class="mood-emoji">😠</div>
-                <div class="mood-label">生氣</div>
-            </div>
-        </div>
 
-        <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
-        <button class="submit-btn">記錄心情</button>
+            <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
+            <button class="submit-btn">記錄心情</button>
 
-        <div class="music-section">
-            <h2 class="section-title">心情配樂</h2>
-            <div id="music-player-container">
-                <audio id="music-player" controls>
-                    <source src="" type="audio/mpeg">
-                    您的瀏覽器不支持音頻播放器。
-                </audio>
+            <div class="music-section">
+                <h2 class="section-title">心情配樂</h2>
+                <div id="music-player-container">
+                    <audio id="music-player" controls>
+                        <source src="" type="audio/mpeg">
+                        您的瀏覽器不支持音頻播放器。
+                    </audio>
+                </div>
+                <div id="music-recommendations"></div>
             </div>
-            <div id="music-recommendations"></div>
-        </div>
 
-        <div class="mood-history">
-            <h2 class="section-title">歷史記錄</h2>
-            <div id="history-container"></div>
+            <div class="mood-history">
+                <h2 class="section-title">歷史記錄</h2>
+                <div id="history-container"></div>
+            </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const moodCards = document.querySelectorAll('.mood-card');
+            const mainContent = document.getElementById('main-content');
+            const moodGrid = document.getElementById('mood-grid');
             const languageCards = document.querySelectorAll('.language-card');
             const noteInput = document.querySelector('.note-input');
             const submitBtn = document.querySelector('.submit-btn');
@@ -420,6 +404,73 @@
             let selectedMood = '';
             let selectedLanguage = '';
             let songDatabase = [];
+            let moodEmojis = {
+                '很開心': '😄',
+                '開心': '😊',
+                '普通': '😐',
+                '不開心': '😢',
+                '生氣': '😠',
+                '興奮': '🤩',
+                '放鬆': '😌',
+                '感動': '🥺',
+                '焦慮': '😰',
+                '疲倦': '😪'
+            };
+
+            // 處理 Excel 檔案上傳
+            excelFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadStatus.textContent = '正在處理檔案...';
+                    try {
+                        const data = await file.arrayBuffer();
+                        const workbook = XLSX.read(data);
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        songDatabase = XLSX.utils.sheet_to_json(worksheet);
+
+                        // 獲取所有不重複的情緒
+                        const moods = [...new Set(songDatabase.map(song => song.情緒))];
+
+                        if (moods.length === 0) {
+                            throw new Error('Excel 檔案中沒有找到情緒欄位');
+                        }
+
+                        // 生成情緒卡片
+                        generateMoodCards(moods);
+
+                        // 顯示主要內容
+                        mainContent.style.display = 'block';
+
+                        uploadStatus.textContent = '音樂資料庫已更新！';
+                        uploadStatus.style.color = '#4CAF50';
+                    } catch (error) {
+                        uploadStatus.textContent = '處理檔案時發生錯誤：' + error.message;
+                        uploadStatus.style.color = '#f44336';
+                        console.error('Error processing Excel file:', error);
+                        mainContent.style.display = 'none';
+                    }
+                }
+            });
+
+            // 生成情緒卡片
+            function generateMoodCards(moods) {
+                moodGrid.innerHTML = moods.map(mood => `
+                    <div class="mood-card" data-mood="${mood}">
+                        <div class="mood-emoji">${moodEmojis[mood] || '😶'}</div>
+                        <div class="mood-label">${mood}</div>
+                    </div>
+                `).join('');
+
+                // 重新綁定情緒卡片事件
+                document.querySelectorAll('.mood-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.mood-card').forEach(c => c.classList.remove('selected'));
+                        card.classList.add('selected');
+                        selectedMood = card.dataset.mood;
+                        updateMusicRecommendations();
+                    });
+                });
+            }
 
             // 處理語言卡片選擇
             languageCards.forEach(card => {
@@ -431,36 +482,6 @@
                         updateMusicRecommendations();
                     }
                 });
-            });
-
-            // 處理情緒卡片選擇
-            moodCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    moodCards.forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    selectedMood = card.dataset.mood;
-                    updateMusicRecommendations();
-                });
-            });
-
-            excelFileInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    uploadStatus.textContent = '正在處理檔案...';
-                    try {
-                        const data = await file.arrayBuffer();
-                        const workbook = XLSX.read(data);
-                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        songDatabase = XLSX.utils.sheet_to_json(worksheet);
-                        uploadStatus.textContent = '音樂資料庫已更新！';
-                        if (selectedMood) {
-                            updateMusicRecommendations();
-                        }
-                    } catch (error) {
-                        uploadStatus.textContent = '處理檔案時發生錯誤，請確認檔案格式是否正確。';
-                        console.error('Error processing Excel file:', error);
-                    }
-                }
             });
 
             function updateMusicRecommendations() {
@@ -494,7 +515,7 @@
                        </div>`
                     : '<p>沒有找到符合條件的歌曲</p>';
 
-                // 為歌曲卡片添加點擊事件，打開 YouTube 連結
+                // 為歌曲卡片添加點擊事件
                 document.querySelectorAll('.song-card').forEach(card => {
                     card.addEventListener('click', () => {
                         const youtubeLink = card.dataset.youtube;
@@ -546,11 +567,12 @@
                 selectedMood = '';
                 selectedLanguage = '';
                 noteInput.value = '';
-                moodCards.forEach(card => card.classList.remove('selected'));
+                document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
                 languageCards.forEach(card => card.classList.remove('selected'));
                 musicRecommendations.innerHTML = '';
             }
 
+            // 初始化歷史記錄
             updateHistory();
         });
     </script>
