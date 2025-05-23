@@ -1045,6 +1045,61 @@
                 padding-top: 25px;
             }
         }
+
+        /* 在音樂推薦頁面顯示當前心情記錄 */
+        .current-mood-record {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .record-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .history-button {
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .history-button:hover {
+            background: #000;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .mood-entry {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .selected-scenario {
+            color: #666;
+            margin: 0 5px;
+        }
+
+        .song-ratings {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
     </style>
 </head>
 
@@ -1409,9 +1464,106 @@
                 });
             });
 
-            // 修改音樂推薦的篩選邏輯
+            // 在音樂推薦頁面顯示當前心情記錄
+            function showCurrentMoodRecord() {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                if (moodHistory.length > 0) {
+                    const latestMood = moodHistory[0];
+                    return `
+                        <div class="current-mood-record">
+                            <div class="record-header">
+                                <h3>本次心情記錄</h3>
+                                <button class="history-button">查看歷史記錄</button>
+                            </div>
+                            <div class="mood-entry">
+                                <p>
+                                    <strong>${latestMood.mood}</strong>
+                                    ${latestMood.scenarios && latestMood.scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${latestMood.scenarios.join(', ')}</span>`
+                            : ''}
+                                    <span style="color: #666;">| ${latestMood.date}</span>
+                                </p>
+                                <p>${latestMood.note}</p>
+                                ${latestMood.songRatings && latestMood.songRatings.length > 0 ? `
+                                    <div class="song-ratings">
+                                        <p><strong>歌曲評分：</strong></p>
+                                        ${latestMood.songRatings.map(rating => `
+                                            <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                return '';
+            }
+
+            // 更新音樂推薦頁面的樣式
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+                .current-mood-record {
+                    margin: 30px 0;
+                    padding: 20px;
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                }
+
+                .record-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                }
+
+                .record-header h3 {
+                    margin: 0;
+                    color: #333;
+                }
+
+                .history-button {
+                    background: #f5f5f5;
+                    border: none;
+                    border-radius: 50px;
+                    padding: 8px 16px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-size: 0.9em;
+                    color: #333;
+                }
+
+                .history-button:hover {
+                    background: #000;
+                    color: white;
+                    transform: translateY(-2px);
+                }
+
+                .mood-entry {
+                    background: #f9f9f9;
+                    padding: 15px;
+                    border-radius: 8px;
+                }
+
+                .selected-scenario {
+                    color: #666;
+                    margin: 0 5px;
+                }
+
+                .song-ratings {
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid #eee;
+                }
+            `;
+            document.head.appendChild(styleSheet);
+
+            // 修改音樂推薦頁面的顯示邏輯
             function updateMusicRecommendations() {
                 if (!lastMoodRecord) return;
+
+                // 設置預設語言為"全部"
+                selectedLanguage = selectedLanguage || '全部';
 
                 let filteredSongs = songDatabase.filter(song => {
                     if (selectedLanguage !== '全部' && song.語言 !== selectedLanguage) {
@@ -1427,50 +1579,61 @@
                     return viewsB - viewsA;
                 });
 
-                musicRecommendations.innerHTML = filteredSongs.length > 0
-                    ? `<div class="recommendations-header">
-                        <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
-                        <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
-                       </div>
-                        ${filteredSongs.map(song => `
-                        <div class="song-detail-card">
-                            <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
-                            <div class="song-info">
+                musicRecommendations.innerHTML = `
+                    ${showCurrentMoodRecord()}
+                    ${filteredSongs.length > 0
+                        ? `<div class="recommendations-header">
+                            <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
+                            <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
+                           </div>
+                           ${filteredSongs.map(song => `
+                            <div class="song-detail-card">
+                                <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
+                                <div class="song-info">
                                     <h3 class="song-title">${song.歌名}</h3>
                                     <p class="song-artist">${song.歌手}</p>
-                                <div class="song-stats">
-                                    <div class="stat-item">
-                                        <span>語言:</span>
-                                        <strong>${song.語言}</strong>
+                                    <div class="song-stats">
+                                        <div class="stat-item">
+                                            <span>語言:</span>
+                                            <strong>${song.語言}</strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>點閱率:</span>
+                                            <strong>${formatViews(song.點閱率)}</strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>情緒:</span>
+                                            <strong>${song.情緒}</strong>
+                                        </div>
+                                        ${song.情境 ? `
+                                        <div class="stat-item">
+                                            <span>情境:</span>
+                                            <strong>${song.情境}</strong>
+                                        </div>
+                                        ` : ''}
                                     </div>
-                                    <div class="stat-item">
-                                        <span>點閱率:</span>
-                                        <strong>${formatViews(song.點閱率)}</strong>
-                                </div>
-                                    <div class="stat-item">
-                                        <span>情緒:</span>
-                                        <strong>${song.情緒}</strong>
-                            </div>
-                                    ${song.情境 ? `
-                                    <div class="stat-item">
-                                        <span>情境:</span>
-                                        <strong>${song.情境}</strong>
+                                    <div class="rating" data-song="${song.歌名}">
+                                        ${Array(5).fill().map((_, i) => `
+                                            <span class="star" data-rating="${i + 1}">★</span>
+                                        `).join('')}
                                     </div>
-                                    ` : ''}
+                                    <div class="song-rating-display"></div>
+                                    <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
+                                        在 YouTube 上播放
+                                    </a>
                                 </div>
-                                <div class="rating" data-song="${song.歌名}">
-                                    ${Array(5).fill().map((_, i) => `
-                                        <span class="star" data-rating="${i + 1}">★</span>
-                        `).join('')}
-                                </div>
-                                <div class="song-rating-display"></div>
-                                <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
-                                    在 YouTube 上播放
-                                </a>
                             </div>
-                        </div>
-                    `).join('')}`
-                    : `<p>沒有找到符合條件的歌曲</p>`;
+                        `).join('')}`
+                        : `<p>沒有找到符合條件的歌曲</p>`}
+                `;
+
+                // 綁定歷史記錄按鈕事件
+                const historyButton = document.querySelector('.history-button');
+                if (historyButton) {
+                    historyButton.addEventListener('click', () => {
+                        document.querySelector('[data-page="page-mood"]').click();
+                    });
+                }
 
                 // 綁定星級評分事件
                 document.querySelectorAll('.rating').forEach(ratingContainer => {
