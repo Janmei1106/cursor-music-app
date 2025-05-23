@@ -824,6 +824,43 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* 星級評分樣式 */
+        .rating {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .star {
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.2s ease;
+        }
+
+        .star.active {
+            color: #FFD700;
+        }
+
+        .star:hover,
+        .star:hover~.star {
+            color: #FFD700;
+        }
+
+        .rating:hover .star {
+            color: #FFD700;
+        }
+
+        .rating .star:hover~.star {
+            color: #ddd;
+        }
+
+        .song-rating-display {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
     </style>
 </head>
 
@@ -1153,24 +1190,19 @@
                 if (!lastMoodRecord) return;
 
                 let filteredSongs = songDatabase.filter(song => {
-                    // 處理語言篩選
                     if (selectedLanguage !== '全部' && song.語言 !== selectedLanguage) {
                         return false;
                     }
-
-                    // 處理情緒匹配
                     const songMoods = processMoodString(song.情緒);
                     return songMoods.includes(lastMoodRecord.mood);
                 });
 
-                // 根據點閱率排序
                 filteredSongs.sort((a, b) => {
                     const viewsA = parseInt(a.點閱率) || 0;
                     const viewsB = parseInt(b.點閱率) || 0;
                     return viewsB - viewsA;
                 });
 
-                // 更新顯示
                 musicRecommendations.innerHTML = filteredSongs.length > 0
                     ? `<div class="recommendations-header">
                         <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
@@ -1202,6 +1234,12 @@
                                     </div>
                                     ` : ''}
                                 </div>
+                                <div class="rating" data-song="${song.歌名}">
+                                    ${Array(5).fill().map((_, i) => `
+                                        <span class="star" data-rating="${i + 1}">★</span>
+                                    `).join('')}
+                                </div>
+                                <div class="song-rating-display"></div>
                                 <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
                                     在 YouTube 上播放
                                 </a>
@@ -1209,6 +1247,24 @@
                         </div>
                     `).join('')}`
                     : `<p>沒有找到符合條件的歌曲</p>`;
+
+                // 綁定星級評分事件
+                document.querySelectorAll('.rating').forEach(ratingContainer => {
+                    const stars = ratingContainer.querySelectorAll('.star');
+                    const songName = ratingContainer.dataset.song;
+                    const displayElement = ratingContainer.nextElementSibling;
+
+                    stars.forEach(star => {
+                        star.addEventListener('click', () => {
+                            const rating = parseInt(star.dataset.rating);
+                            stars.forEach((s, index) => {
+                                s.classList.toggle('active', index < rating);
+                            });
+                            addSongRating(songName, rating);
+                            displayElement.textContent = `您給這首歌 ${rating} 顆星`;
+                        });
+                    });
+                });
             }
 
             // 格式化點閱率顯示
@@ -1391,8 +1447,30 @@
                             <span style="color: #666;">| ${entry.date}</span>
                         </p>
                         <p>${entry.note}</p>
+                        ${entry.songRatings && entry.songRatings.length > 0 ? `
+                            <div class="song-ratings">
+                                <p><strong>歌曲評分：</strong></p>
+                                ${entry.songRatings.map(rating => `
+                                    <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 `).join('');
+            }
+
+            // 在 moodHistory 中添加歌曲評分
+            function addSongRating(songName, rating) {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                if (moodHistory.length > 0) {
+                    const latestMood = moodHistory[0];
+                    if (!latestMood.songRatings) {
+                        latestMood.songRatings = [];
+                    }
+                    latestMood.songRatings.push({ songName, rating });
+                    localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
+                }
+                updateHistory();
             }
 
             // 初始化
