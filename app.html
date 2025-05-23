@@ -505,6 +505,54 @@
             border-radius: 15px;
             font-size: 0.9em;
         }
+
+        /* 按鈕共用樣式 */
+        .choice-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .choice-button:hover {
+            background-color: #f5f5f5;
+            transform: translateY(-2px);
+        }
+
+        .choice-button.selected {
+            background-color: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .choice-section {
+            margin: 20px 0;
+        }
+
+        .choice-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .section-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .choices-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 
@@ -523,26 +571,21 @@
         <!-- 第二頁：記錄心情 -->
         <div id="page-mood" class="page">
             <h1 class="section-title">記錄今日心情</h1>
-            <div id="mood-grid" class="mood-grid">
-                <!-- 情緒卡片將由 JavaScript 動態生成 -->
+            <div class="choices-container">
+                <div class="section-label">選擇心情：</div>
+                <div id="mood-grid" class="choice-grid">
+                    <!-- 情緒卡片將由 JavaScript 動態生成 -->
+                </div>
+            </div>
+
+            <div class="choices-container">
+                <div class="section-label">選擇情境（可複選）：</div>
+                <div id="scenario-grid" class="choice-grid">
+                    <!-- 情境按鈕將由 JavaScript 動態生成 -->
+                </div>
             </div>
 
             <div class="mood-record-section">
-                <div id="selected-mood-display" class="selected-mood-display" style="display: none;">
-                    <span class="selected-mood-emoji"></span>
-                    <div>
-                        <div class="selected-mood-text"></div>
-                        <div class="selected-scenario"></div>
-                    </div>
-                </div>
-
-                <div class="scenario-section" style="display: none;">
-                    <h3>選擇相關情境：</h3>
-                    <div id="scenario-grid" class="scenario-grid">
-                        <!-- 情境標籤將由 JavaScript 動態生成 -->
-                    </div>
-                </div>
-
                 <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
                 <button class="submit-btn">記錄心情</button>
             </div>
@@ -556,22 +599,14 @@
         <!-- 第三頁：音樂推薦 -->
         <div id="page-music" class="page">
             <h1 class="section-title">為您推薦的音樂</h1>
-            <div class="language-grid">
-                <div class="language-card" data-language="中文">
-                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="中文">
-                    <div class="card-text">中文</div>
-                </div>
-                <div class="language-card" data-language="英文">
-                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="英文">
-                    <div class="card-text">英文</div>
-                </div>
-                <div class="language-card" data-language="日文">
-                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="日文">
-                    <div class="card-text">日文</div>
-                </div>
-                <div class="language-card" data-language="韓文">
-                    <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="韓文">
-                    <div class="card-text">韓文</div>
+            <div class="choices-container">
+                <div class="section-label">選擇語言：</div>
+                <div class="choice-grid" id="language-buttons">
+                    <button class="choice-button selected" data-language="全部">全部</button>
+                    <button class="choice-button" data-language="中文">中文</button>
+                    <button class="choice-button" data-language="英文">英文</button>
+                    <button class="choice-button" data-language="日文">日文</button>
+                    <button class="choice-button" data-language="韓文">韓文</button>
                 </div>
             </div>
             <div id="music-recommendations"></div>
@@ -601,7 +636,7 @@
             const musicRecommendations = document.getElementById('music-recommendations');
             const excelFileInput = document.getElementById('excel-file');
             const uploadStatus = document.getElementById('upload-status');
-            const languageCards = document.querySelectorAll('.language-card');
+            const languageButtons = document.querySelectorAll('.choice-button[data-language]');
             const selectedMoodDisplay = document.getElementById('selected-mood-display');
             const scenarioSection = document.querySelector('.scenario-section');
             const scenarioGrid = document.getElementById('scenario-grid');
@@ -622,7 +657,7 @@
                 '焦慮': '😰',
                 '疲倦': '😪'
             };
-            let selectedScenario = '';
+            let selectedScenarios = new Set();
 
             // 在頁面加載時獲取最後一次的心情記錄
             function getLastMoodRecord() {
@@ -654,51 +689,74 @@
                 });
             });
 
-            // 處理語言卡片選擇
-            languageCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    languageCards.forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    selectedLanguage = card.dataset.language;
+            // 獲取所有可能的情境
+            function getAllScenarios() {
+                return [...new Set(
+                    songDatabase
+                        .filter(song => song.情境)
+                        .map(song => song.情境)
+                        .flatMap(scenario => processMoodString(scenario))
+                )];
+            }
 
-                    // 獲取最後一次的心情記錄
-                    lastMoodRecord = getLastMoodRecord();
-                    if (!lastMoodRecord) {
-                        alert('請先記錄心情！');
-                        return;
-                    }
+            // 生成情境按鈕
+            function generateScenarioButtons() {
+                const scenarios = getAllScenarios();
+                scenarioGrid.innerHTML = scenarios.map(scenario => `
+                    <button class="choice-button" data-scenario="${scenario}">
+                        ${scenario}
+                    </button>
+                `).join('');
 
+                // 綁定情境按鈕點擊事件
+                document.querySelectorAll('.choice-button[data-scenario]').forEach(button => {
+                    button.addEventListener('click', () => {
+                        button.classList.toggle('selected');
+                        if (button.classList.contains('selected')) {
+                            selectedScenarios.add(button.dataset.scenario);
+                        } else {
+                            selectedScenarios.delete(button.dataset.scenario);
+                        }
+                    });
+                });
+            }
+
+            // 處理語言按鈕點擊
+            languageButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    languageButtons.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    selectedLanguage = button.dataset.language;
                     updateMusicRecommendations();
                 });
             });
 
+            // 修改音樂推薦的篩選邏輯
             function updateMusicRecommendations() {
                 if (!lastMoodRecord) return;
 
-                // 篩選符合條件的歌曲：
-                // 1. 符合選擇的語言
-                // 2. 歌曲的情緒中包含最後一次記錄的心情
                 let filteredSongs = songDatabase.filter(song => {
-                    // 檢查語言
-                    if (song.語言 !== selectedLanguage) return false;
+                    // 處理語言篩選
+                    if (selectedLanguage !== '全部' && song.語言 !== selectedLanguage) {
+                        return false;
+                    }
 
-                    // 處理歌曲的情緒（可能包含多個情緒）
+                    // 處理情緒匹配
                     const songMoods = processMoodString(song.情緒);
-
-                    // 只要包含其中一個情緒即可
                     return songMoods.includes(lastMoodRecord.mood);
                 });
 
-                // 根據點閱率排序（如果有點閱率的話）
+                // 根據點閱率排序
                 filteredSongs.sort((a, b) => {
                     const viewsA = parseInt(a.點閱率) || 0;
                     const viewsB = parseInt(b.點閱率) || 0;
                     return viewsB - viewsA;
                 });
 
+                // 更新顯示
                 musicRecommendations.innerHTML = filteredSongs.length > 0
                     ? `<div class="recommendations-header">
-                        <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage}歌曲：</h3>
+                        <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
                         <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
                        </div>
                        ${filteredSongs.map(song => `
@@ -708,6 +766,10 @@
                                 <h3 class="song-title">${song.歌名}</h3>
                                 <p class="song-artist">${song.歌手}</p>
                                 <div class="song-stats">
+                                    <div class="stat-item">
+                                        <span>語言:</span>
+                                        <strong>${song.語言}</strong>
+                                    </div>
                                     <div class="stat-item">
                                         <span>點閱率:</span>
                                         <strong>${formatViews(song.點閱率)}</strong>
@@ -729,7 +791,7 @@
                             </div>
                         </div>
                     `).join('')}`
-                    : `<p>沒有找到符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage}歌曲</p>`;
+                    : `<p>沒有找到符合條件的歌曲</p>`;
             }
 
             // 格式化點閱率顯示
@@ -763,6 +825,8 @@
                         }
 
                         generateMoodCards(moods);
+                        generateScenarioButtons(); // 生成情境按鈕
+
                         uploadStatus.textContent = '音樂資料庫已更新！';
                         uploadStatus.style.color = '#4CAF50';
 
@@ -809,7 +873,7 @@
                             document.querySelectorAll('.scenario-tag').forEach(t =>
                                 t.classList.remove('selected'));
                             tag.classList.add('selected');
-                            selectedScenario = tag.dataset.scenario;
+                            selectedScenarios.add(tag.dataset.scenario);
                             updateSelectedMoodDisplay();
                         });
                     });
@@ -826,7 +890,7 @@
                     selectedMoodDisplay.querySelector('.selected-mood-emoji').textContent = emoji;
                     selectedMoodDisplay.querySelector('.selected-mood-text').textContent = selectedMood;
                     selectedMoodDisplay.querySelector('.selected-scenario').textContent =
-                        selectedScenario ? `情境: ${selectedScenario}` : '';
+                        selectedScenarios.size > 0 ? `情境: ${Array.from(selectedScenarios).join(', ')}` : '';
                     selectedMoodDisplay.style.display = 'flex';
                 } else {
                     selectedMoodDisplay.style.display = 'none';
@@ -852,7 +916,7 @@
                             c.classList.remove('selected'));
                         card.classList.add('selected');
                         selectedMood = card.dataset.mood;
-                        selectedScenario = ''; // 重置情境選擇
+                        selectedScenarios.clear();
                         updateScenarioSection(selectedMood);
                         updateSelectedMoodDisplay();
                     });
@@ -869,7 +933,7 @@
                 const date = new Date().toLocaleString('zh-TW');
                 const moodEntry = {
                     mood: selectedMood,
-                    scenario: selectedScenario,
+                    scenarios: Array.from(selectedScenarios),
                     note,
                     date
                 };
@@ -881,6 +945,11 @@
                 updateHistory();
                 lastMoodRecord = moodEntry;
 
+                // 重置選擇
+                selectedScenarios.clear();
+                document.querySelectorAll('.choice-button[data-scenario]').forEach(btn =>
+                    btn.classList.remove('selected'));
+
                 document.querySelector('[data-page="page-music"]').click();
             });
 
@@ -890,7 +959,9 @@
                     <div class="mood-entry">
                         <p>
                             <strong>${entry.mood}</strong>
-                            ${entry.scenario ? `<span class="selected-scenario">| ${entry.scenario}</span>` : ''}
+                            ${entry.scenarios && entry.scenarios.length > 0
+                        ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
+                        : ''}
                             <span style="color: #666;">| ${entry.date}</span>
                         </p>
                         <p>${entry.note}</p>
