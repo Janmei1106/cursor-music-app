@@ -1857,7 +1857,45 @@
                     latestMood.songRatings.push({ songName, rating });
                     localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
                 }
+                // 更新歷史記錄
                 updateHistory();
+
+                // 更新本次心情記錄顯示
+                const currentMoodRecord = document.querySelector('.current-mood-record');
+                if (currentMoodRecord) {
+                    currentMoodRecord.innerHTML = `
+                        <div class="record-header">
+                            <h3>本次心情記錄</h3>
+                            <button class="history-button">查看歷史記錄</button>
+                        </div>
+                        <div class="mood-entry">
+                            <p>
+                                <strong>${moodHistory[0].mood}</strong>
+                                ${moodHistory[0].scenarios && moodHistory[0].scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${moodHistory[0].scenarios.join(', ')}</span>`
+                            : ''}
+                                <span style="color: #666;">| ${moodHistory[0].date}</span>
+                            </p>
+                            <p>${moodHistory[0].note}</p>
+                            ${moodHistory[0].songRatings && moodHistory[0].songRatings.length > 0 ? `
+                                <div class="song-ratings">
+                                    <p><strong>歌曲評分：</strong></p>
+                                    ${moodHistory[0].songRatings.map(rating => `
+                                        <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    // 重新綁定歷史記錄按鈕事件
+                    const historyButton = currentMoodRecord.querySelector('.history-button');
+                    if (historyButton) {
+                        historyButton.addEventListener('click', () => {
+                            document.querySelector('[data-page="page-mood"]').click();
+                        });
+                    }
+                }
             }
 
             // 初始化
