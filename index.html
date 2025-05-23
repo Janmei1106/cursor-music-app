@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日情緒記錄與音樂</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: '微軟正黑體', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .mood-selector {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .mood-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 2em;
+            transition: transform 0.2s;
+        }
+
+        .mood-button:hover {
+            transform: scale(1.2);
+        }
+
+        .note-input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 1em;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background-color: #000;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #333;
+        }
+
+        .mood-history {
+            margin-top: 40px;
+        }
+
+        .mood-entry {
+            background-color: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+
+        .music-section {
+            margin-top: 40px;
+            background-color: transparent;
+        }
+
+        .music-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .music-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .music-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .music-item img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        .music-info {
+            flex-grow: 1;
+        }
+
+        .music-title {
+            font-size: 1.3em;
+            margin-bottom: 8px;
+        }
+
+        .song-artist {
+            color: #666;
+            margin: 0 0 5px 0;
+        }
+
+        .song-lyrics {
+            font-size: 0.9em;
+            color: #777;
+            margin: 5px 0;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .song-tags {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .tag {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
+
+        /* 語言卡片網格 */
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .language-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .language-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .language-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .language-card .card-text {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        /* 情緒卡片網格 */
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .mood-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mood-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .mood-card.selected {
+            border-color: #000;
+            background-color: #f8f8f8;
+        }
+
+        .mood-emoji {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .mood-label {
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        /* 音樂播放器和推薦區域 */
+        .song-card {
+            background: white;
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            border: 1px solid #eee;
+        }
+
+        .song-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .song-cover {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .song-details {
+            padding: 20px;
+        }
+
+        .song-title {
+            font-size: 1.3em;
+            margin-bottom: 8px;
+        }
+
+        /* 上傳區域 */
+        .excel-upload {
+            margin: 30px 0;
+            padding: 30px;
+            border: 2px dashed #000;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .excel-upload input {
+            display: none;
+        }
+
+        .excel-upload label {
+            background-color: #000;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .excel-upload label:hover {
+            background-color: #333;
+        }
+
+        /* 音樂播放器 */
+        #music-player {
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        /* 區段標題 */
+        .section-title {
+            font-size: 1.8em;
+            margin: 40px 0 20px;
+            text-align: center;
+            color: #000;
+        }
+
+        .filter-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .filter-label {
+            min-width: 80px;
+            font-weight: bold;
+        }
+
+        .filter-select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            flex-grow: 1;
+        }
+
+        /* 頁面導航 */
+        .page-nav {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button.active {
+            background-color: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        /* 頁面容器 */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* 歌曲詳細資訊卡片 */
+        .song-detail-card {
+            background: white;
+            border-radius: 12px;
+            margin: 15px 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            border: 1px solid #eee;
+            transition: transform 0.3s ease;
+        }
+
+        .song-detail-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .song-cover-large {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .song-info {
+            flex: 1;
+        }
+
+        .song-stats {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+            color: #666;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .youtube-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: #ff0000;
+            color: white;
+            border-radius: 20px;
+            text-decoration: none;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .youtube-link:hover {
+            background-color: #cc0000;
+        }
+
+        /* 情境選擇區域 */
+        .scenario-section {
+            margin: 20px 0;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .scenario-tag {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-tag:hover {
+            background-color: #eee;
+        }
+
+        .scenario-tag.selected {
+            background-color: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        /* 情緒記錄區塊 */
+        .mood-record-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .selected-mood-display {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .selected-mood-emoji {
+            font-size: 2em;
+        }
+
+        .selected-mood-text {
+            font-size: 1.1em;
+        }
+
+        .selected-scenario {
+            color: #666;
+            font-style: italic;
+        }
+
+        .recommendations-header {
+            margin-bottom: 20px;
+        }
+
+        .mood-match-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .song-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-item {
+            background-color: #f5f5f5;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        /* 按鈕共用樣式 */
+        .choice-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .choice-button:hover {
+            background-color: #f5f5f5;
+            transform: translateY(-2px);
+        }
+
+        .choice-button.selected {
+            background-color: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .choice-section {
+            margin: 20px 0;
+        }
+
+        .choice-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .section-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .choices-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 情緒分類定義 */
+        .mood-category-section,
+        .mood-subcategory-section {
+            margin: 20px 0;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .category-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .category-label {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .back-button {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #eee;
+        }
+
+        .mood-subcategory-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        #mood-subcategory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .category-title {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .mood-category-section {
+            margin: 20px auto;
+            max-width: 1000px;
+            text-align: center;
+        }
+
+        .category-grid {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+
+        .category-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .category-label {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .subcategory-container {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .mood-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mood-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mood-card.selected {
+            border-color: #000;
+            background-color: #f8f8f8;
+        }
+
+        .mood-emoji {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .mood-label {
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .category-title {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            text-align: left;
+        }
+
+        @media (max-width: 1200px) {
+            .mood-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mood-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .mood-category-section {
+            margin: 20px auto;
+            max-width: 1000px;
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .category-tab {
+            background: #f5f5f5;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        .category-tab:hover {
+            background: #000;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* 移除之前的首個標籤和選中樣式 */
+        .category-tab:first-child,
+        .category-tab.active {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .category-tab:first-child:hover,
+        .category-tab.active:hover {
+            background: #000;
+            color: white;
+        }
+
+        .subcategory-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .mood-card {
+            background: #f5f5f5;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mood-card .mood-emoji {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mood-card .mood-label {
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: normal;
+        }
+
+        .mood-card:hover {
+            background: #000;
+            transform: translateY(-2px);
+        }
+
+        .mood-card:hover .mood-emoji,
+        .mood-card:hover .mood-label {
+            color: white;
+        }
+
+        .mood-card.selected {
+            background: #000;
+        }
+
+        .mood-card.selected .mood-emoji,
+        .mood-card.selected .mood-label {
+            color: white;
+        }
+
+        .mood-card.selected .mood-label {
+            font-weight: bold;
+        }
+
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .category-tabs {
+                flex-direction: column;
+            }
+
+            .category-tab {
+                text-align: center;
+            }
+
+            .mood-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* 星級評分樣式 */
+        .rating {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .star {
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.2s ease;
+        }
+
+        .star.active {
+            color: #FFD700;
+        }
+
+        .star:hover,
+        .star:hover~.star {
+            color: #FFD700;
+        }
+
+        .rating:hover .star {
+            color: #FFD700;
+        }
+
+        .rating .star:hover~.star {
+            color: #ddd;
+        }
+
+        .song-rating-display {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .mood-card {
+            background: #f5f5f5;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            /* 防止文字被選中 */
+        }
+
+        .mood-card .mood-emoji {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mood-card .mood-label {
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: normal;
+        }
+
+        .mood-card:hover {
+            background: #000;
+            transform: translateY(-2px);
+        }
+
+        .mood-card:hover .mood-emoji,
+        .mood-card:hover .mood-label {
+            color: white;
+        }
+
+        .mood-card.selected {
+            background: #000;
+            pointer-events: auto;
+            /* 確保選中後仍可點擊 */
+        }
+
+        .mood-card.selected .mood-emoji,
+        .mood-card.selected .mood-label {
+            color: white;
+        }
+
+        .mood-card.selected .mood-label {
+            font-weight: bold;
+        }
+
+        .subcategory-container {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: opacity 0.3s ease;
+        }
+
+        .subcategory-container.fixed {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .reset-button {
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .reset-button:hover {
+            background: #000;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .category-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .reset-button {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+
+        .subcategory-container {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: opacity 0.3s ease;
+            position: relative;
+        }
+
+        .reset-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #333;
+            z-index: 10;
+        }
+
+        .reset-button:hover {
+            background: #000;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            padding-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .reset-button {
+                top: 15px;
+                right: 15px;
+                padding: 6px 12px;
+                font-size: 0.8em;
+            }
+
+            .mood-grid {
+                padding-top: 25px;
+            }
+        }
+
+        /* 在音樂推薦頁面顯示當前心情記錄 */
+        .current-mood-record {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .record-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .history-button {
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .history-button:hover {
+            background: #000;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .mood-entry {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .selected-scenario {
+            color: #666;
+            margin: 0 5px;
+        }
+
+        .song-ratings {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 頁面導航 -->
+        <div class="page-nav">
+            <button class="nav-button active" data-page="page-upload">上傳資料</button>
+            <button class="nav-button" data-page="page-mood">心情記錄</button>
+            <button class="nav-button" data-page="page-music">音樂推薦</button>
+        </div>
+
+        <!-- 第一頁：上傳 Excel -->
+        <div id="page-upload" class="page active">
+            <h1 class="section-title">音樂情緒管理系統</h1>
+            <div class="excel-upload">
+                <input type="file" id="excel-file" accept=".xlsx,.xls">
+                <label for="excel-file">上傳音樂資料庫 (Excel檔案)</label>
+                <p id="upload-status"></p>
+            </div>
+        </div>
+
+        <!-- 第二頁：記錄心情 -->
+        <div id="page-mood" class="page">
+            <h1 class="section-title">記錄今日心情</h1>
+            <div class="choices-container">
+                <div class="section-label">選擇心情：</div>
+                <div id="mood-grid" class="choice-grid">
+                    <!-- 情緒卡片將由 JavaScript 動態生成 -->
+                </div>
+            </div>
+
+            <div class="choices-container">
+                <div class="section-label">選擇情境（可複選）：</div>
+                <div id="scenario-grid" class="choice-grid">
+                    <!-- 情境按鈕將由 JavaScript 動態生成 -->
+                </div>
+            </div>
+
+            <div class="mood-record-section">
+                <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
+                <button class="submit-btn">記錄心情</button>
+            </div>
+
+            <div class="mood-history">
+                <h2 class="section-title">歷史記錄</h2>
+                <div id="history-container"></div>
+            </div>
+        </div>
+
+        <!-- 第三頁：音樂推薦 -->
+        <div id="page-music" class="page">
+            <h1 class="section-title">為您推薦的音樂</h1>
+            <div class="choices-container">
+                <div class="section-label">選擇語言：</div>
+                <div class="choice-grid" id="language-buttons">
+                    <button class="choice-button selected" data-language="全部">全部</button>
+                    <button class="choice-button" data-language="中文">中文</button>
+                    <button class="choice-button" data-language="英文">英文</button>
+                    <button class="choice-button" data-language="日文">日文</button>
+                    <button class="choice-button" data-language="韓文">韓文</button>
+                </div>
+            </div>
+            <div id="music-recommendations"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pages = {
+                upload: document.getElementById('page-upload'),
+                mood: document.getElementById('page-mood'),
+                music: document.getElementById('page-music')
+            };
+
+            const navButtons = document.querySelectorAll('.nav-button');
+            const moodGrid = document.getElementById('mood-grid');
+            const noteInput = document.querySelector('.note-input');
+            const submitBtn = document.querySelector('.submit-btn');
+            const historyContainer = document.getElementById('history-container');
+            const musicRecommendations = document.getElementById('music-recommendations');
+            const excelFileInput = document.getElementById('excel-file');
+            const uploadStatus = document.getElementById('upload-status');
+            const languageButtons = document.querySelectorAll('.choice-button[data-language]');
+            const selectedMoodDisplay = document.getElementById('selected-mood-display');
+            const scenarioSection = document.querySelector('.scenario-section');
+            const scenarioGrid = document.getElementById('scenario-grid');
+
+            let selectedMood = '';
+            let selectedLanguage = '';
+            let songDatabase = [];
+            let lastMoodRecord = null;
+            let moodEmojis = {
+                // 正面情緒
+                '開心': '🌟',
+                '快樂': '✨',
+                '喜悅': '🌸',
+                '興奮': '⭐',
+                '放鬆': '🍃',
+                '愉悅': '🌺',
+                '幸福': '💝',
+                '滿足': '💫',
+
+                // 負面情緒
+                '難過': '💧',
+                '悲傷': '💔',
+                '憂鬱': '🌧️',
+                '沮喪': '⛈️',
+                '痛苦': '💫',
+                '失望': '🥀',
+                '遺憾': '🍂',
+                '後悔': '🌙',
+
+                // 平靜/中性情緒
+                '平靜': '🌊',
+                '安詳': '🕊️',
+                '淡然': '☁️',
+                '冷靜': '❄️',
+
+                // 強烈情緒
+                '憤怒': '⚡',
+                '生氣': '🔥',
+                '激動': '✨',
+                '熱情': '🌞',
+
+                // 複雜情緒
+                '感動': '✨',
+                '思念': '🌙',
+                '期待': '🌈',
+                '緊張': '💫',
+                '焦慮': '🌪️',
+                '驚訝': '⭐',
+                '困惑': '❓',
+            };
+            let selectedScenarios = new Set();
+
+            // 情緒分類定義
+            const moodCategories = {
+                '正面': {
+                    icon: '🌟',
+                    moods: ['開心', '快樂', '喜悅', '興奮', '放鬆', '愉悅', '幸福', '滿足',
+                        '平靜', '安詳', '溫暖', '感動', '期待', '熱情', '振奮', '自信']
+                },
+                '負面': {
+                    icon: '💔',
+                    moods: ['難過', '悲傷', '憂鬱', '沮喪', '痛苦', '失望', '遺憾', '後悔',
+                        '憤怒', '生氣', '焦慮', '緊張', '煩躁', '寂寞', '無奈', '疲倦']
+                },
+                '其他': {
+                    icon: '✨',
+                    moods: ['複雜', '矛盾', '驚訝', '困惑', '懷念', '期待'] // 預設的其他情緒
+                }
+            };
+
+            let selectedCategory = '';
+
+            function analyzeMoodCategory(mood) {
+                // 移除標點符號和空格
+                mood = mood.replace(/[，。、；,.;\s]/g, '');
+
+                // 檢查是否在正面情緒列表中
+                if (moodCategories['正面'].moods.some(m => mood.includes(m))) {
+                    return '正面';
+                }
+                // 檢查是否在負面情緒列表中
+                if (moodCategories['負面'].moods.some(m => mood.includes(m))) {
+                    return '負面';
+                }
+                // 如果都沒有匹配，返回其他
+                return '其他';
+            }
+
+            function generateCategoryButtons() {
+                return `
+                    <div class="mood-category-section">
+                        <div class="category-tabs">
+                            ${Object.entries(moodCategories).map(([category, data]) => `
+                                <div class="category-tab" data-category="${category}">
+                                    ${category}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="subcategory-container">
+                            <button class="reset-button" style="display: none;">重新選擇</button>
+                            <div id="mood-subcategory-grid"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function resetMoodSelection() {
+                selectedMood = '';
+                document.querySelectorAll('.mood-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                document.querySelector('.reset-button').style.display = 'none';
+                document.querySelector('.subcategory-container').style.display = 'none';
+
+                // 重置情境選擇
+                selectedScenarios.clear();
+                updateScenarioSection(selectedMood);
+                updateSelectedMoodDisplay();
+            }
+
+            function generateMoodCards(moods) {
+                const uniqueMoods = [...new Set(
+                    moods.flatMap(mood => processMoodString(mood))
+                )];
+
+                // 生成類別選擇按鈕
+                moodGrid.innerHTML = generateCategoryButtons();
+
+                // 綁定重新選擇按鈕事件
+                const resetButton = document.querySelector('.reset-button');
+                resetButton.addEventListener('click', resetMoodSelection);
+
+                // 綁定類別標籤懸停事件
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('mouseenter', () => {
+                        const category = tab.dataset.category;
+                        if (!selectedMood) {
+                            showMoodSubcategories(uniqueMoods, category);
+                        }
+                    });
+                });
+
+                // 初始隱藏子類別區域
+                document.querySelector('.subcategory-container').style.display = 'none';
+
+                // 綁定情緒卡片點擊事件
+                document.addEventListener('click', (e) => {
+                    const moodCard = e.target.closest('.mood-card');
+                    if (moodCard) {
+                        e.preventDefault();
+                        document.querySelectorAll('.mood-card').forEach(c =>
+                            c.classList.remove('selected'));
+                        moodCard.classList.add('selected');
+                        selectedMood = moodCard.dataset.mood;
+
+                        // 顯示重新選擇按鈕
+                        document.querySelector('.reset-button').style.display = 'block';
+
+                        selectedScenarios.clear();
+                        updateScenarioSection(selectedMood);
+                        updateSelectedMoodDisplay();
+                    }
+                });
+
+                // 監聽整個類別區域的懸停事件
+                const categorySection = document.querySelector('.mood-category-section');
+                const subcategoryContainer = document.querySelector('.subcategory-container');
+
+                categorySection.addEventListener('mouseleave', () => {
+                    if (!selectedMood) {
+                        subcategoryContainer.style.display = 'none';
+                    }
+                });
+
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('mouseenter', () => {
+                        if (!selectedMood) {
+                            subcategoryContainer.style.display = 'block';
+                        }
+                    });
+                });
+            }
+
+            function showMoodSubcategories(allMoods, category) {
+                // 如果已經選中了情緒，且不是切換類別，則不更新顯示
+                if (selectedMood && document.querySelector('.mood-card.selected')) {
+                    return;
+                }
+
+                // 過濾所選類別的情緒
+                const categoryMoods = allMoods.filter(mood =>
+                    analyzeMoodCategory(mood) === category
+                );
+
+                // 更新子類別網格
+                const subcategoryGrid = document.getElementById('mood-subcategory-grid');
+                subcategoryGrid.innerHTML = `
+                    <div class="mood-grid">
+                        ${categoryMoods.map(mood => `
+                            <div class="mood-card${mood === selectedMood ? ' selected' : ''}" data-mood="${mood}">
+                                <div class="mood-emoji">${getEmoticonForMood(mood)}</div>
+                                <div class="mood-label">${mood}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // 在頁面加載時獲取最後一次的心情記錄
+            function getLastMoodRecord() {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                return moodHistory.length > 0 ? moodHistory[0] : null;
+            }
+
+            // 頁面導航
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!songDatabase.length && button.dataset.page !== 'page-upload') {
+                        alert('請先上傳音樂資料庫！');
+                        return;
+                    }
+
+                    if (button.dataset.page === 'page-music') {
+                        lastMoodRecord = getLastMoodRecord();
+                        if (!lastMoodRecord) {
+                            alert('請先記錄心情！');
+                            return;
+                        }
+                    }
+
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    Object.values(pages).forEach(page => page.classList.remove('active'));
+                    document.getElementById(button.dataset.page).classList.add('active');
+                });
+            });
+
+            // 獲取所有可能的情境
+            function getAllScenarios() {
+                return [...new Set(
+                    songDatabase
+                        .filter(song => song.情境)
+                        .map(song => song.情境)
+                        .flatMap(scenario => processMoodString(scenario))
+                )];
+            }
+
+            // 生成情境按鈕
+            function generateScenarioButtons() {
+                const scenarios = getAllScenarios();
+                scenarioGrid.innerHTML = scenarios.map(scenario => `
+                    <button class="choice-button" data-scenario="${scenario}">
+                        ${scenario}
+                    </button>
+                `).join('');
+
+                // 綁定情境按鈕點擊事件
+                document.querySelectorAll('.choice-button[data-scenario]').forEach(button => {
+                    button.addEventListener('click', () => {
+                        button.classList.toggle('selected');
+                        if (button.classList.contains('selected')) {
+                            selectedScenarios.add(button.dataset.scenario);
+                        } else {
+                            selectedScenarios.delete(button.dataset.scenario);
+                        }
+                    });
+                });
+            }
+
+            // 處理語言按鈕點擊
+            languageButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    languageButtons.forEach(btn => btn.classList.remove('selected'));
+                    button.classList.add('selected');
+                    selectedLanguage = button.dataset.language;
+                    updateMusicRecommendations();
+                });
+            });
+
+            // 在音樂推薦頁面顯示當前心情記錄
+            function showCurrentMoodRecord() {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                if (moodHistory.length > 0) {
+                    const latestMood = moodHistory[0];
+                    return `
+                        <div class="current-mood-record">
+                            <div class="record-header">
+                                <h3>本次心情記錄</h3>
+                                <button class="history-button">查看歷史記錄</button>
+                            </div>
+                            <div class="mood-entry">
+                                <p>
+                                    <strong>${latestMood.mood}</strong>
+                                    ${latestMood.scenarios && latestMood.scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${latestMood.scenarios.join(', ')}</span>`
+                            : ''}
+                                    <span style="color: #666;">| ${latestMood.date}</span>
+                                </p>
+                                <p>${latestMood.note}</p>
+                                ${latestMood.songRatings && latestMood.songRatings.length > 0 ? `
+                                    <div class="song-ratings">
+                                        <p><strong>歌曲評分：</strong></p>
+                                        ${latestMood.songRatings.map(rating => `
+                                            <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                return '';
+            }
+
+            // 更新音樂推薦頁面的樣式
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+                .current-mood-record {
+                    margin: 30px 0;
+                    padding: 20px;
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                }
+
+                .record-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                }
+
+                .record-header h3 {
+                    margin: 0;
+                    color: #333;
+                }
+
+                .history-button {
+                    background: #f5f5f5;
+                    border: none;
+                    border-radius: 50px;
+                    padding: 8px 16px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-size: 0.9em;
+                    color: #333;
+                }
+
+                .history-button:hover {
+                    background: #000;
+                    color: white;
+                    transform: translateY(-2px);
+                }
+
+                .mood-entry {
+                    background: #f9f9f9;
+                    padding: 15px;
+                    border-radius: 8px;
+                }
+
+                .selected-scenario {
+                    color: #666;
+                    margin: 0 5px;
+                }
+
+                .song-ratings {
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px solid #eee;
+                }
+            `;
+            document.head.appendChild(styleSheet);
+
+            // 修改音樂推薦頁面的顯示邏輯
+            function updateMusicRecommendations() {
+                if (!lastMoodRecord) return;
+
+                // 設置預設語言為"全部"
+                selectedLanguage = selectedLanguage || '全部';
+
+                let filteredSongs = songDatabase.filter(song => {
+                    if (selectedLanguage !== '全部' && song.語言 !== selectedLanguage) {
+                        return false;
+                    }
+                    const songMoods = processMoodString(song.情緒);
+                    return songMoods.includes(lastMoodRecord.mood);
+                });
+
+                filteredSongs.sort((a, b) => {
+                    const viewsA = parseInt(a.點閱率) || 0;
+                    const viewsB = parseInt(b.點閱率) || 0;
+                    return viewsB - viewsA;
+                });
+
+                musicRecommendations.innerHTML = `
+                    <div class="current-mood-record">
+                        <div class="record-header">
+                            <h3>本次心情記錄</h3>
+                        </div>
+                        <div class="mood-entry">
+                            <p>
+                                <strong>${lastMoodRecord.mood}</strong>
+                                ${lastMoodRecord.scenarios && lastMoodRecord.scenarios.length > 0
+                        ? `<span class="selected-scenario">| ${lastMoodRecord.scenarios.join(', ')}</span>`
+                        : ''}
+                                <span style="color: #666;">| ${lastMoodRecord.date}</span>
+                            </p>
+                            <p>${lastMoodRecord.note}</p>
+                            ${lastMoodRecord.songRatings && lastMoodRecord.songRatings.length > 0 ? `
+                                <div class="song-ratings">
+                                    <p><strong>歌曲評分：</strong></p>
+                                    ${lastMoodRecord.songRatings.map(rating => `
+                                        <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ${filteredSongs.length > 0
+                        ? `<div class="recommendations-header">
+                            <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
+                            <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
+                           </div>
+                           ${filteredSongs.map(song => `
+                            <div class="song-detail-card">
+                                <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
+                                <div class="song-info">
+                                    <h3 class="song-title">${song.歌名}</h3>
+                                    <p class="song-artist">${song.歌手}</p>
+                                    <div class="song-stats">
+                                        <div class="stat-item">
+                                            <span>語言:</span>
+                                            <strong>${song.語言}</strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>點閱率:</span>
+                                            <strong>${formatViews(song.點閱率)}</strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>情緒:</span>
+                                            <strong>${song.情緒}</strong>
+                                        </div>
+                                        ${song.情境 ? `
+                                        <div class="stat-item">
+                                            <span>情境:</span>
+                                            <strong>${song.情境}</strong>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                    <div class="rating" data-song="${song.歌名}">
+                                        ${Array(5).fill().map((_, i) => `
+                                            <span class="star" data-rating="${i + 1}">★</span>
+                                        `).join('')}
+                                    </div>
+                                    <div class="song-rating-display"></div>
+                                    <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
+                                        在 YouTube 上播放
+                                    </a>
+                                </div>
+                            </div>
+                        `).join('')}`
+                        : `<p>沒有找到符合條件的歌曲</p>`}
+                `;
+
+                // 綁定星級評分事件
+                document.querySelectorAll('.rating').forEach(ratingContainer => {
+                    const stars = ratingContainer.querySelectorAll('.star');
+                    const songName = ratingContainer.dataset.song;
+                    const displayElement = ratingContainer.nextElementSibling;
+
+                    stars.forEach(star => {
+                        star.addEventListener('click', () => {
+                            const rating = parseInt(star.dataset.rating);
+                            stars.forEach((s, index) => {
+                                s.classList.toggle('active', index < rating);
+                            });
+                            addSongRating(songName, rating);
+                            displayElement.textContent = `您給這首歌 ${rating} 顆星`;
+                        });
+                    });
+                });
+            }
+
+            // 格式化點閱率顯示
+            function formatViews(views) {
+                if (!views) return 'N/A';
+                const num = parseInt(views);
+                if (isNaN(num)) return views;
+                if (num >= 100000000) {
+                    return (num / 100000000).toFixed(1) + '億';
+                } else if (num >= 10000) {
+                    return (num / 10000).toFixed(1) + '萬';
+                }
+                return num.toLocaleString();
+            }
+
+            // Excel 檔案上傳處理
+            excelFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadStatus.textContent = '正在處理檔案...';
+                    try {
+                        const data = await file.arrayBuffer();
+                        const workbook = XLSX.read(data);
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        songDatabase = XLSX.utils.sheet_to_json(worksheet);
+
+                        const moods = [...new Set(songDatabase.map(song => song.情緒))];
+
+                        if (moods.length === 0) {
+                            throw new Error('Excel 檔案中沒有找到情緒欄位');
+                        }
+
+                        generateMoodCards(moods);
+                        generateScenarioButtons(); // 生成情境按鈕
+
+                        uploadStatus.textContent = '音樂資料庫已更新！';
+                        uploadStatus.style.color = '#4CAF50';
+
+                        setTimeout(() => {
+                            document.querySelector('[data-page="page-mood"]').click();
+                        }, 1000);
+                    } catch (error) {
+                        uploadStatus.textContent = '處理檔案時發生錯誤：' + error.message;
+                        uploadStatus.style.color = '#f44336';
+                        console.error('Error processing Excel file:', error);
+                    }
+                }
+            });
+
+            function processMoodString(moodString) {
+                // 移除所有空白字符
+                moodString = moodString.trim();
+                // 分割字串（支援多種分隔符號）
+                return moodString.split(/[、，,;；]/g)
+                    .map(mood => mood.trim())
+                    .filter(mood => mood.length > 0);
+            }
+
+            function getRelatedScenarios(mood) {
+                return [...new Set(
+                    songDatabase
+                        .filter(song => {
+                            // 處理歌曲的情緒字串
+                            const songMoods = processMoodString(song.情緒);
+                            // 只有當歌曲的情緒包含所選情緒時才返回其情境
+                            return songMoods.includes(mood) && song.情境;
+                        })
+                        .flatMap(song => processMoodString(song.情境))
+                )];
+            }
+
+            function updateScenarioSection(mood) {
+                const scenarios = getRelatedScenarios(mood);
+                if (scenarios.length > 0) {
+                    scenarioGrid.innerHTML = scenarios.map(scenario => `
+                        <div class="scenario-tag" data-scenario="${scenario}">
+                            ${scenario}
+                        </div>
+                    `).join('');
+
+                    // 綁定情境標籤點擊事件
+                    document.querySelectorAll('.scenario-tag').forEach(tag => {
+                        tag.addEventListener('click', () => {
+                            document.querySelectorAll('.scenario-tag').forEach(t =>
+                                t.classList.remove('selected'));
+                            tag.classList.add('selected');
+                            selectedScenarios.add(tag.dataset.scenario);
+                            updateSelectedMoodDisplay();
+                        });
+                    });
+
+                    scenarioSection.style.display = 'block';
+                } else {
+                    scenarioSection.style.display = 'none';
+                }
+            }
+
+            function updateSelectedMoodDisplay() {
+                if (selectedMood) {
+                    const emoji = getEmoticonForMood(selectedMood);
+                    selectedMoodDisplay.querySelector('.selected-mood-emoji').textContent = emoji;
+                    selectedMoodDisplay.querySelector('.selected-mood-text').textContent = selectedMood;
+                    selectedMoodDisplay.querySelector('.selected-scenario').textContent =
+                        selectedScenarios.size > 0 ? `情境: ${Array.from(selectedScenarios).join(', ')}` : '';
+                    selectedMoodDisplay.style.display = 'flex';
+                } else {
+                    selectedMoodDisplay.style.display = 'none';
+                }
+            }
+
+            // 智能情緒符號配對函數
+            function getEmoticonForMood(mood) {
+                // 如果有直接對應的符號，直接返回
+                if (moodEmojis[mood]) {
+                    return moodEmojis[mood];
+                }
+
+                // 關鍵字對應規則
+                const moodRules = {
+                    '開心|快樂|喜悅|愉悅|幸福': ['🌟', '✨', '🌸', '💝', '💫'],
+                    '悲傷|難過|痛苦|遺憾|失望': ['💧', '💔', '🌧️', '🥀', '🍂'],
+                    '憤怒|生氣|煩躁|惱怒': ['🔥', '⚡', '💢'],
+                    '平靜|安詳|寧靜|祥和': ['🌊', '🕊️', '☁️', '🍃'],
+                    '愛|戀|情': ['💝', '💕', '💗'],
+                    '期待|希望|夢想': ['🌈', '⭐', '✨'],
+                    '疲倦|累|困': ['🌙', '💫', '🍂']
+                };
+
+                // 尋找匹配的規則
+                for (const [pattern, emoticons] of Object.entries(moodRules)) {
+                    if (new RegExp(pattern).test(mood)) {
+                        // 從符合的符號中隨機選擇一個
+                        return emoticons[Math.floor(Math.random() * emoticons.length)];
+                    }
+                }
+
+                // 如果沒有匹配的規則，返回預設符號
+                return '💫';
+            }
+
+            submitBtn.addEventListener('click', () => {
+                if (!selectedMood) {
+                    alert('請選擇一個心情！');
+                    return;
+                }
+
+                const note = noteInput.value;
+                const date = new Date().toLocaleString('zh-TW');
+                const moodEntry = {
+                    mood: selectedMood,
+                    scenarios: Array.from(selectedScenarios),
+                    note,
+                    date
+                };
+
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                moodHistory.unshift(moodEntry);
+                localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
+
+                updateHistory();
+                lastMoodRecord = moodEntry;
+
+                // 重置選擇
+                selectedScenarios.clear();
+                document.querySelectorAll('.choice-button[data-scenario]').forEach(btn =>
+                    btn.classList.remove('selected'));
+
+                document.querySelector('[data-page="page-music"]').click();
+            });
+
+            function updateHistory() {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                historyContainer.innerHTML = moodHistory.map(entry => `
+                    <div class="mood-entry">
+                        <p>
+                            <strong>${entry.mood}</strong>
+                            ${entry.scenarios && entry.scenarios.length > 0
+                        ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
+                        : ''}
+                            <span style="color: #666;">| ${entry.date}</span>
+                        </p>
+                        <p>${entry.note}</p>
+                        ${entry.songRatings && entry.songRatings.length > 0 ? `
+                            <div class="song-ratings">
+                                <p><strong>歌曲評分：</strong></p>
+                                ${entry.songRatings.map(rating => `
+                                    <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+
+            // 在 moodHistory 中添加歌曲評分
+            function addSongRating(songName, rating) {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                if (moodHistory.length > 0) {
+                    const latestMood = moodHistory[0];
+                    if (!latestMood.songRatings) {
+                        latestMood.songRatings = [];
+                    }
+                    latestMood.songRatings.push({ songName, rating });
+                    localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
+                }
+                // 更新歷史記錄
+                updateHistory();
+
+                // 更新本次心情記錄顯示
+                const currentMoodRecord = document.querySelector('.current-mood-record');
+                if (currentMoodRecord) {
+                    currentMoodRecord.innerHTML = `
+                        <div class="record-header">
+                            <h3>本次心情記錄</h3>
+                        </div>
+                        <div class="mood-entry">
+                            <p>
+                                <strong>${moodHistory[0].mood}</strong>
+                                ${moodHistory[0].scenarios && moodHistory[0].scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${moodHistory[0].scenarios.join(', ')}</span>`
+                            : ''}
+                                <span style="color: #666;">| ${moodHistory[0].date}</span>
+                            </p>
+                            <p>${moodHistory[0].note}</p>
+                            ${moodHistory[0].songRatings && moodHistory[0].songRatings.length > 0 ? `
+                                <div class="song-ratings">
+                                    <p><strong>歌曲評分：</strong></p>
+                                    ${moodHistory[0].songRatings.map(rating => `
+                                        <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            // 初始化
+            updateHistory();
+            lastMoodRecord = getLastMoodRecord();
+        });
+    </script>
+</body>
+
+</html>
