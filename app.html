@@ -1530,22 +1530,45 @@
                     }
                     localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
 
-                    // 立即更新當前心情記錄顯示
+                    // 立即更新當前心情記錄顯示（第三頁）
                     const currentMoodRecord = document.querySelector('.current-mood-record');
                     if (currentMoodRecord) {
                         currentMoodRecord.innerHTML = showCurrentMoodRecord().slice(4, -4); // 移除最外層的div標籤
                     }
+
+                    // 立即更新歷史記錄顯示（第二頁）
+                    updateHistory();
                 }
             }
 
-            // 修改歷史記錄按鈕點擊事件
-            function bindHistoryButton() {
-                const historyButton = document.querySelector('.history-button');
-                if (historyButton) {
-                    historyButton.addEventListener('click', () => {
-                        window.fromHistoryButton = true;
-                        document.querySelector('[data-page="page-mood"]').click();
-                    });
+            // 修改歷史記錄顯示函數
+            function updateHistory() {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                const historyContainer = document.getElementById('history-container');
+
+                if (historyContainer) {
+                    historyContainer.innerHTML = `
+                        ${moodHistory.map(entry => `
+                            <div class="mood-entry">
+                                <p>
+                                    <strong>${entry.mood}</strong>
+                                    ${entry.scenarios && entry.scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
+                            : ''}
+                                    <span style="color: #666;">| ${entry.date}</span>
+                                </p>
+                                <p>${entry.note}</p>
+                                ${entry.songRatings && entry.songRatings.length > 0 ? `
+                                    <div class="song-ratings">
+                                        <p><strong>歌曲評分：</strong></p>
+                                        ${entry.songRatings.map(rating => `
+                                            <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    `;
                 }
             }
 
@@ -1818,30 +1841,6 @@
 
                 document.querySelector('[data-page="page-music"]').click();
             });
-
-            function updateHistory() {
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-                historyContainer.innerHTML = moodHistory.map(entry => `
-                    <div class="mood-entry">
-                        <p>
-                            <strong>${entry.mood}</strong>
-                            ${entry.scenarios && entry.scenarios.length > 0
-                        ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
-                        : ''}
-                            <span style="color: #666;">| ${entry.date}</span>
-                        </p>
-                        <p>${entry.note}</p>
-                        ${entry.songRatings && entry.songRatings.length > 0 ? `
-                            <div class="song-ratings">
-                                <p><strong>歌曲評分：</strong></p>
-                                ${entry.songRatings.map(rating => `
-                                    <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `).join('');
-            }
 
             // 初始化
             updateHistory();
