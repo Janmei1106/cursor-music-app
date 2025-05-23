@@ -889,6 +889,69 @@
             font-size: 0.9em;
             color: #666;
         }
+
+        .mood-card {
+            background: #f5f5f5;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            /* 防止文字被選中 */
+        }
+
+        .mood-card .mood-emoji {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mood-card .mood-label {
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: normal;
+        }
+
+        .mood-card:hover {
+            background: #000;
+            transform: translateY(-2px);
+        }
+
+        .mood-card:hover .mood-emoji,
+        .mood-card:hover .mood-label {
+            color: white;
+        }
+
+        .mood-card.selected {
+            background: #000;
+            pointer-events: auto;
+            /* 確保選中後仍可點擊 */
+        }
+
+        .mood-card.selected .mood-emoji,
+        .mood-card.selected .mood-label {
+            color: white;
+        }
+
+        .mood-card.selected .mood-label {
+            font-weight: bold;
+        }
+
+        .subcategory-container {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: opacity 0.3s ease;
+        }
+
+        .subcategory-container.fixed {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 
@@ -1090,7 +1153,9 @@
                 document.querySelectorAll('.category-tab').forEach(tab => {
                     tab.addEventListener('mouseenter', () => {
                         const category = tab.dataset.category;
-                        showMoodSubcategories(uniqueMoods, category);
+                        if (!selectedMood) { // 只有在未選中情緒時才更新顯示
+                            showMoodSubcategories(uniqueMoods, category);
+                        }
                     });
                 });
 
@@ -1101,10 +1166,13 @@
                 document.addEventListener('click', (e) => {
                     const moodCard = e.target.closest('.mood-card');
                     if (moodCard) {
+                        e.preventDefault(); // 防止頁面跳動
                         document.querySelectorAll('.mood-card').forEach(c =>
                             c.classList.remove('selected'));
                         moodCard.classList.add('selected');
                         selectedMood = moodCard.dataset.mood;
+
+                        // 更新相關狀態但不隱藏子類別區域
                         selectedScenarios.clear();
                         updateScenarioSection(selectedMood);
                         updateSelectedMoodDisplay();
@@ -1116,7 +1184,9 @@
                 const subcategoryContainer = document.querySelector('.subcategory-container');
 
                 categorySection.addEventListener('mouseleave', () => {
-                    subcategoryContainer.style.display = 'none';
+                    if (!selectedMood) { // 只有在未選中情緒時才隱藏
+                        subcategoryContainer.style.display = 'none';
+                    }
                 });
 
                 document.querySelectorAll('.category-tab').forEach(tab => {
@@ -1127,6 +1197,11 @@
             }
 
             function showMoodSubcategories(allMoods, category) {
+                // 如果已經選中了情緒，且不是切換類別，則不更新顯示
+                if (selectedMood && document.querySelector('.mood-card.selected')) {
+                    return;
+                }
+
                 // 過濾所選類別的情緒
                 const categoryMoods = allMoods.filter(mood =>
                     analyzeMoodCategory(mood) === category
@@ -1137,7 +1212,7 @@
                 subcategoryGrid.innerHTML = `
                     <div class="mood-grid">
                         ${categoryMoods.map(mood => `
-                            <div class="mood-card" data-mood="${mood}">
+                            <div class="mood-card${mood === selectedMood ? ' selected' : ''}" data-mood="${mood}">
                                 <div class="mood-emoji">${getEmoticonForMood(mood)}</div>
                                 <div class="mood-label">${mood}</div>
                             </div>
@@ -1509,68 +1584,6 @@
             // 初始化
             updateHistory();
             lastMoodRecord = getLastMoodRecord();
-
-            const styleSheet = document.createElement('style');
-            styleSheet.textContent = `
-                .mood-card {
-                    background: #f5f5f5;
-                    border: none;
-                    border-radius: 12px;
-                    padding: 15px;
-                    text-align: center;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                }
-
-                .mood-card .mood-emoji {
-                    font-size: 1.5em;
-                    margin-bottom: 8px;
-                    transition: all 0.3s ease;
-                }
-
-                .mood-card .mood-label {
-                    font-size: 1em;
-                    transition: all 0.3s ease;
-                    font-weight: normal;
-                }
-
-                .mood-card:hover {
-                    background: #000;
-                    transform: translateY(-2px);
-                }
-
-                .mood-card:hover .mood-emoji,
-                .mood-card:hover .mood-label {
-                    color: white;
-                }
-
-                .mood-card.selected {
-                    background: #000;
-                }
-
-                .mood-card.selected .mood-emoji,
-                .mood-card.selected .mood-label {
-                    color: white;
-                }
-
-                .mood-card.selected .mood-label {
-                    font-weight: bold;
-                }
-
-                .mood-grid {
-                    display: grid;
-                    grid-template-columns: repeat(5, 1fr);
-                    gap: 15px;
-                    margin: 20px 0;
-                }
-
-                @media (max-width: 768px) {
-                    .mood-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                    }
-                }
-            `;
-            document.head.appendChild(styleSheet);
         });
     </script>
 </body>
