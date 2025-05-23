@@ -9,17 +9,18 @@
     <style>
         body {
             font-family: '微軟正黑體', sans-serif;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
+            color: #333;
         }
 
         .container {
             background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         h1,
@@ -48,44 +49,44 @@
 
         .note-input {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 15px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 1em;
             resize: vertical;
         }
 
         .submit-btn {
-            background-color: #3498db;
+            background-color: #000;
             color: white;
-            padding: 10px 20px;
+            padding: 15px 30px;
             border: none;
-            border-radius: 5px;
+            border-radius: 12px;
             cursor: pointer;
-            width: 100%;
-            margin-bottom: 20px;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
         }
 
         .submit-btn:hover {
-            background-color: #2980b9;
+            background-color: #333;
         }
 
         .mood-history {
-            margin-top: 20px;
+            margin-top: 40px;
         }
 
         .mood-entry {
-            background-color: #f8f9fa;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
+            background-color: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            border: 1px solid #eee;
         }
 
         .music-section {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
+            margin-top: 40px;
+            background-color: transparent;
         }
 
         .music-list {
@@ -120,19 +121,185 @@
         }
 
         .music-title {
-            font-weight: bold;
-            margin: 0;
+            font-size: 1.3em;
+            margin-bottom: 8px;
         }
 
-        .music-artist {
+        .song-artist {
             color: #666;
-            margin: 0;
-            font-size: 0.9em;
+            margin: 0 0 5px 0;
         }
 
+        .song-lyrics {
+            font-size: 0.9em;
+            color: #777;
+            margin: 5px 0;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .song-tags {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .tag {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
+
+        /* 語言卡片網格 */
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .language-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .language-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .language-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .language-card .card-text {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        /* 情緒卡片網格 */
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .mood-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mood-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .mood-card.selected {
+            border-color: #000;
+            background-color: #f8f8f8;
+        }
+
+        .mood-emoji {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .mood-label {
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        /* 音樂播放器和推薦區域 */
+        .song-card {
+            background: white;
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            border: 1px solid #eee;
+        }
+
+        .song-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .song-cover {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .song-details {
+            padding: 20px;
+        }
+
+        .song-title {
+            font-size: 1.3em;
+            margin-bottom: 8px;
+        }
+
+        /* 上傳區域 */
+        .excel-upload {
+            margin: 30px 0;
+            padding: 30px;
+            border: 2px dashed #000;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .excel-upload input {
+            display: none;
+        }
+
+        .excel-upload label {
+            background-color: #000;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .excel-upload label:hover {
+            background-color: #333;
+        }
+
+        /* 音樂播放器 */
         #music-player {
             width: 100%;
-            margin-top: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        /* 區段標題 */
+        .section-title {
+            font-size: 1.8em;
+            margin: 40px 0 20px;
+            text-align: center;
+            color: #000;
         }
 
         .filter-section {
@@ -161,95 +328,12 @@
             border: 1px solid #ddd;
             flex-grow: 1;
         }
-
-        .excel-upload {
-            margin: 20px 0;
-            padding: 20px;
-            border: 2px dashed #3498db;
-            border-radius: 10px;
-            text-align: center;
-            background-color: #f8f9fa;
-        }
-
-        .excel-upload input {
-            display: none;
-        }
-
-        .excel-upload label {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .excel-upload label:hover {
-            background-color: #2980b9;
-        }
-
-        .song-card {
-            display: flex;
-            padding: 15px;
-            margin: 10px 0;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .song-cover {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-right: 15px;
-        }
-
-        .song-details {
-            flex-grow: 1;
-        }
-
-        .song-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin: 0 0 5px 0;
-        }
-
-        .song-artist {
-            color: #666;
-            margin: 0 0 5px 0;
-        }
-
-        .song-lyrics {
-            font-size: 0.9em;
-            color: #777;
-            margin: 5px 0;
-            max-height: 60px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-        }
-
-        .song-tags {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-        }
-
-        .tag {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            background-color: #e9ecef;
-        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>每日情緒記錄與音樂推薦</h1>
+        <h1 class="section-title">每日情緒記錄與音樂推薦</h1>
 
         <div class="excel-upload">
             <input type="file" id="excel-file" accept=".xlsx,.xls">
@@ -257,39 +341,55 @@
             <p id="upload-status"></p>
         </div>
 
-        <div class="mood-selector">
-            <button class="mood-button" data-mood="很開心">😄</button>
-            <button class="mood-button" data-mood="開心">😊</button>
-            <button class="mood-button" data-mood="普通">😐</button>
-            <button class="mood-button" data-mood="不開心">😢</button>
-            <button class="mood-button" data-mood="生氣">😠</button>
+        <h2 class="section-title">選擇語言</h2>
+        <div class="language-grid">
+            <div class="language-card" data-language="中文">
+                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="中文">
+                <div class="card-text">中文</div>
+            </div>
+            <div class="language-card" data-language="英文">
+                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="英文">
+                <div class="card-text">英文</div>
+            </div>
+            <div class="language-card" data-language="日文">
+                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="日文">
+                <div class="card-text">日文</div>
+            </div>
+            <div class="language-card" data-language="韓文">
+                <img src="https://images.unsplash.com/photo-1516163024308-f9428f3b1661?w=500&auto=format" alt="韓文">
+                <div class="card-text">韓文</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">今日心情</h2>
+        <div class="mood-grid">
+            <div class="mood-card" data-mood="很開心">
+                <div class="mood-emoji">😄</div>
+                <div class="mood-label">很開心</div>
+            </div>
+            <div class="mood-card" data-mood="開心">
+                <div class="mood-emoji">😊</div>
+                <div class="mood-label">開心</div>
+            </div>
+            <div class="mood-card" data-mood="普通">
+                <div class="mood-emoji">😐</div>
+                <div class="mood-label">普通</div>
+            </div>
+            <div class="mood-card" data-mood="不開心">
+                <div class="mood-emoji">😢</div>
+                <div class="mood-label">不開心</div>
+            </div>
+            <div class="mood-card" data-mood="生氣">
+                <div class="mood-emoji">😠</div>
+                <div class="mood-label">生氣</div>
+            </div>
         </div>
 
         <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
         <button class="submit-btn">記錄心情</button>
 
-        <div class="filter-section">
-            <h3>音樂篩選</h3>
-            <div class="filter-group">
-                <span class="filter-label">語言：</span>
-                <select id="language-filter" class="filter-select">
-                    <option value="">全部</option>
-                    <option value="中文">中文</option>
-                    <option value="英文">英文</option>
-                    <option value="日文">日文</option>
-                    <option value="韓文">韓文</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">情境：</span>
-                <select id="scenario-filter" class="filter-select">
-                    <option value="">全部</option>
-                </select>
-            </div>
-        </div>
-
         <div class="music-section">
-            <h2>心情配樂</h2>
+            <h2 class="section-title">心情配樂</h2>
             <div id="music-player-container">
                 <audio id="music-player" controls>
                     <source src="" type="audio/mpeg">
@@ -300,14 +400,15 @@
         </div>
 
         <div class="mood-history">
-            <h2>歷史記錄</h2>
+            <h2 class="section-title">歷史記錄</h2>
             <div id="history-container"></div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const moodButtons = document.querySelectorAll('.mood-button');
+            const moodCards = document.querySelectorAll('.mood-card');
+            const languageCards = document.querySelectorAll('.language-card');
             const noteInput = document.querySelector('.note-input');
             const submitBtn = document.querySelector('.submit-btn');
             const historyContainer = document.getElementById('history-container');
@@ -315,11 +416,32 @@
             const musicPlayer = document.getElementById('music-player');
             const excelFileInput = document.getElementById('excel-file');
             const uploadStatus = document.getElementById('upload-status');
-            const languageFilter = document.getElementById('language-filter');
-            const scenarioFilter = document.getElementById('scenario-filter');
 
             let selectedMood = '';
+            let selectedLanguage = '';
             let songDatabase = [];
+
+            // 處理語言卡片選擇
+            languageCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    languageCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedLanguage = card.dataset.language;
+                    if (selectedMood) {
+                        updateMusicRecommendations();
+                    }
+                });
+            });
+
+            // 處理情緒卡片選擇
+            moodCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    moodCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedMood = card.dataset.mood;
+                    updateMusicRecommendations();
+                });
+            });
 
             excelFileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
@@ -330,17 +452,9 @@
                         const workbook = XLSX.read(data);
                         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                         songDatabase = XLSX.utils.sheet_to_json(worksheet);
-
-                        const scenarios = new Set(songDatabase.map(song => song.情境).filter(Boolean));
-                        scenarioFilter.innerHTML = '<option value="">全部</option>' +
-                            Array.from(scenarios).map(scenario =>
-                                `<option value="${scenario}">${scenario}</option>`
-                            ).join('');
-
                         uploadStatus.textContent = '音樂資料庫已更新！';
-
                         if (selectedMood) {
-                            updateMusicRecommendations(selectedMood);
+                            updateMusicRecommendations();
                         }
                     } catch (error) {
                         uploadStatus.textContent = '處理檔案時發生錯誤，請確認檔案格式是否正確。';
@@ -349,53 +463,29 @@
                 }
             });
 
-            languageFilter.addEventListener('change', () => {
-                if (selectedMood) updateMusicRecommendations(selectedMood);
-            });
-
-            scenarioFilter.addEventListener('change', () => {
-                if (selectedMood) updateMusicRecommendations(selectedMood);
-            });
-
-            moodButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    selectedMood = button.dataset.mood;
-                    moodButtons.forEach(btn => btn.style.opacity = '0.5');
-                    button.style.opacity = '1';
-                    updateMusicRecommendations(selectedMood);
-                });
-            });
-
-            function updateMusicRecommendations(mood) {
+            function updateMusicRecommendations() {
                 if (songDatabase.length === 0) {
                     musicRecommendations.innerHTML = '<p>請先上傳音樂資料庫！</p>';
                     return;
                 }
 
-                const language = languageFilter.value;
-                const scenario = scenarioFilter.value;
-
-                let filteredSongs = songDatabase.filter(song => song.情緒 === mood);
-
-                if (language) {
-                    filteredSongs = filteredSongs.filter(song => song.語言 === language);
-                }
-                if (scenario) {
-                    filteredSongs = filteredSongs.filter(song => song.情境 === scenario);
+                let filteredSongs = songDatabase.filter(song => song.情緒 === selectedMood);
+                if (selectedLanguage) {
+                    filteredSongs = filteredSongs.filter(song => song.語言 === selectedLanguage);
                 }
 
                 musicRecommendations.innerHTML = filteredSongs.length > 0
                     ? `<div class="song-list">
                         ${filteredSongs.map(song => `
-                            <div class="song-card">
-                                <img src="${song.封面圖片}" alt="${song.歌名}" class="song-cover">
+                            <div class="song-card" data-youtube="${song.YouTube連結 || ''}">
+                                <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover">
                                 <div class="song-details">
                                     <h3 class="song-title">${song.歌名}</h3>
                                     <p class="song-artist">${song.歌手}</p>
-                                    <p class="song-lyrics">${song.歌詞}</p>
+                                    <p class="song-lyrics">${song.歌詞 || '暫無歌詞'}</p>
                                     <div class="song-tags">
                                         <span class="tag">${song.語言}</span>
-                                        <span class="tag">${song.情境}</span>
+                                        <span class="tag">${song.情境 || '一般'}</span>
                                         <span class="tag">${song.情緒}</span>
                                     </div>
                                 </div>
@@ -403,6 +493,16 @@
                         `).join('')}
                        </div>`
                     : '<p>沒有找到符合條件的歌曲</p>';
+
+                // 為歌曲卡片添加點擊事件，打開 YouTube 連結
+                document.querySelectorAll('.song-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const youtubeLink = card.dataset.youtube;
+                        if (youtubeLink) {
+                            window.open(youtubeLink, '_blank');
+                        }
+                    });
+                });
             }
 
             submitBtn.addEventListener('click', () => {
@@ -413,7 +513,12 @@
 
                 const note = noteInput.value;
                 const date = new Date().toLocaleString('zh-TW');
-                const moodEntry = { mood: selectedMood, note, date };
+                const moodEntry = {
+                    mood: selectedMood,
+                    language: selectedLanguage,
+                    note,
+                    date
+                };
 
                 const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
                 moodHistory.unshift(moodEntry);
@@ -427,7 +532,11 @@
                 const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
                 historyContainer.innerHTML = moodHistory.map(entry => `
                     <div class="mood-entry">
-                        <p>${entry.mood} - ${entry.date}</p>
+                        <p>
+                            <strong>${entry.mood}</strong> 
+                            ${entry.language ? `- ${entry.language}` : ''} 
+                            <span style="color: #666;">| ${entry.date}</span>
+                        </p>
                         <p>${entry.note}</p>
                     </div>
                 `).join('');
@@ -435,8 +544,10 @@
 
             function resetForm() {
                 selectedMood = '';
+                selectedLanguage = '';
                 noteInput.value = '';
-                moodButtons.forEach(btn => btn.style.opacity = '1');
+                moodCards.forEach(card => card.classList.remove('selected'));
+                languageCards.forEach(card => card.classList.remove('selected'));
                 musicRecommendations.innerHTML = '';
             }
 
