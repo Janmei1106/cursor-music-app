@@ -1063,16 +1063,16 @@
                 // 生成類別選擇按鈕
                 moodGrid.innerHTML = generateCategoryButtons();
 
-                // 初始顯示第一個類別（正面）的情緒
-                showMoodSubcategories(uniqueMoods, '正面');
-
-                // 綁定類別標籤點擊事件
+                // 綁定類別標籤懸停事件
                 document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.addEventListener('click', () => {
+                    tab.addEventListener('mouseenter', () => {
                         const category = tab.dataset.category;
                         showMoodSubcategories(uniqueMoods, category);
                     });
                 });
+
+                // 初始隱藏子類別區域
+                document.querySelector('.subcategory-container').style.display = 'none';
 
                 // 綁定情緒卡片點擊事件
                 document.addEventListener('click', (e) => {
@@ -1087,18 +1087,23 @@
                         updateSelectedMoodDisplay();
                     }
                 });
+
+                // 監聽整個類別區域的懸停事件
+                const categorySection = document.querySelector('.mood-category-section');
+                const subcategoryContainer = document.querySelector('.subcategory-container');
+
+                categorySection.addEventListener('mouseleave', () => {
+                    subcategoryContainer.style.display = 'none';
+                });
+
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('mouseenter', () => {
+                        subcategoryContainer.style.display = 'block';
+                    });
+                });
             }
 
             function showMoodSubcategories(allMoods, category) {
-                // 更新標籤狀態
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    if (tab.dataset.category === category) {
-                        tab.classList.add('active');
-                    } else {
-                        tab.classList.remove('active');
-                    }
-                });
-
                 // 過濾所選類別的情緒
                 const categoryMoods = allMoods.filter(mood =>
                     analyzeMoodCategory(mood) === category
