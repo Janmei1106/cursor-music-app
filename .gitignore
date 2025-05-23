@@ -1,0 +1,15 @@
+# 系統相關
+.DS_Store
+Thumbs.db
+
+# IDE 編輯器設定
+.vscode/
+.idea/
+
+# Node.js 如果未來有 npm 套件管理
+node_modules/
+
+# 暫存檔
+*.log
+*.tmp
+
