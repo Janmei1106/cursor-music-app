@@ -646,16 +646,46 @@
             let songDatabase = [];
             let lastMoodRecord = null;
             let moodEmojis = {
-                '很開心': '😄',
-                '開心': '😊',
-                '普通': '😐',
-                '不開心': '😢',
-                '生氣': '😠',
-                '興奮': '🤩',
-                '放鬆': '😌',
-                '感動': '🥺',
-                '焦慮': '😰',
-                '疲倦': '😪'
+                // 正面情緒
+                '開心': '🌟',
+                '快樂': '✨',
+                '喜悅': '🌸',
+                '興奮': '⭐',
+                '放鬆': '🍃',
+                '愉悅': '🌺',
+                '幸福': '💝',
+                '滿足': '💫',
+
+                // 負面情緒
+                '難過': '💧',
+                '悲傷': '💔',
+                '憂鬱': '🌧️',
+                '沮喪': '⛈️',
+                '痛苦': '💫',
+                '失望': '🥀',
+                '遺憾': '🍂',
+                '後悔': '🌙',
+
+                // 平靜/中性情緒
+                '平靜': '🌊',
+                '安詳': '🕊️',
+                '淡然': '☁️',
+                '冷靜': '❄️',
+
+                // 強烈情緒
+                '憤怒': '⚡',
+                '生氣': '🔥',
+                '激動': '✨',
+                '熱情': '🌞',
+
+                // 複雜情緒
+                '感動': '✨',
+                '思念': '🌙',
+                '期待': '🌈',
+                '緊張': '💫',
+                '焦慮': '🌪️',
+                '驚訝': '⭐',
+                '困惑': '❓',
             };
             let selectedScenarios = new Set();
 
@@ -891,7 +921,7 @@
 
             function updateSelectedMoodDisplay() {
                 if (selectedMood) {
-                    const emoji = moodEmojis[selectedMood] || '😶';
+                    const emoji = getEmoticonForMood(selectedMood);
                     selectedMoodDisplay.querySelector('.selected-mood-emoji').textContent = emoji;
                     selectedMoodDisplay.querySelector('.selected-mood-text').textContent = selectedMood;
                     selectedMoodDisplay.querySelector('.selected-scenario').textContent =
@@ -902,6 +932,36 @@
                 }
             }
 
+            // 智能情緒符號配對函數
+            function getEmoticonForMood(mood) {
+                // 如果有直接對應的符號，直接返回
+                if (moodEmojis[mood]) {
+                    return moodEmojis[mood];
+                }
+
+                // 關鍵字對應規則
+                const moodRules = {
+                    '開心|快樂|喜悅|愉悅|幸福': ['🌟', '✨', '🌸', '💝', '💫'],
+                    '悲傷|難過|痛苦|遺憾|失望': ['💧', '💔', '🌧️', '🥀', '🍂'],
+                    '憤怒|生氣|煩躁|惱怒': ['🔥', '⚡', '💢'],
+                    '平靜|安詳|寧靜|祥和': ['🌊', '🕊️', '☁️', '🍃'],
+                    '愛|戀|情': ['💝', '💕', '💗'],
+                    '期待|希望|夢想': ['🌈', '⭐', '✨'],
+                    '疲倦|累|困': ['🌙', '💫', '🍂']
+                };
+
+                // 尋找匹配的規則
+                for (const [pattern, emoticons] of Object.entries(moodRules)) {
+                    if (new RegExp(pattern).test(mood)) {
+                        // 從符合的符號中隨機選擇一個
+                        return emoticons[Math.floor(Math.random() * emoticons.length)];
+                    }
+                }
+
+                // 如果沒有匹配的規則，返回預設符號
+                return '💫';
+            }
+
             function generateMoodCards(moods) {
                 // 處理所有情緒字串，合併成一個不重複的陣列
                 const uniqueMoods = [...new Set(
@@ -910,7 +970,7 @@
 
                 moodGrid.innerHTML = uniqueMoods.map(mood => `
                     <div class="mood-card" data-mood="${mood}">
-                        <div class="mood-emoji">${moodEmojis[mood] || '😶'}</div>
+                        <div class="mood-emoji">${getEmoticonForMood(mood)}</div>
                         <div class="mood-label">${mood}</div>
                     </div>
                 `).join('');
