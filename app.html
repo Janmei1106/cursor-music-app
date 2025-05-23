@@ -418,6 +418,70 @@
         .youtube-link:hover {
             background-color: #cc0000;
         }
+
+        /* 情境選擇區域 */
+        .scenario-section {
+            margin: 20px 0;
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .scenario-tag {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-tag:hover {
+            background-color: #eee;
+        }
+
+        .scenario-tag.selected {
+            background-color: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        /* 情緒記錄區塊 */
+        .mood-record-section {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .selected-mood-display {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .selected-mood-emoji {
+            font-size: 2em;
+        }
+
+        .selected-mood-text {
+            font-size: 1.1em;
+        }
+
+        .selected-scenario {
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -440,8 +504,25 @@
                 <!-- 情緒卡片將由 JavaScript 動態生成 -->
             </div>
 
-            <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
-            <button class="submit-btn">記錄心情</button>
+            <div class="mood-record-section">
+                <div id="selected-mood-display" class="selected-mood-display" style="display: none;">
+                    <span class="selected-mood-emoji"></span>
+                    <div>
+                        <div class="selected-mood-text"></div>
+                        <div class="selected-scenario"></div>
+                    </div>
+                </div>
+
+                <div class="scenario-section" style="display: none;">
+                    <h3>選擇相關情境：</h3>
+                    <div id="scenario-grid" class="scenario-grid">
+                        <!-- 情境標籤將由 JavaScript 動態生成 -->
+                    </div>
+                </div>
+
+                <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
+                <button class="submit-btn">記錄心情</button>
+            </div>
 
             <div class="mood-history">
                 <h2 class="section-title">歷史記錄</h2>
@@ -498,6 +579,9 @@
             const excelFileInput = document.getElementById('excel-file');
             const uploadStatus = document.getElementById('upload-status');
             const languageCards = document.querySelectorAll('.language-card');
+            const selectedMoodDisplay = document.getElementById('selected-mood-display');
+            const scenarioSection = document.querySelector('.scenario-section');
+            const scenarioGrid = document.getElementById('scenario-grid');
 
             let selectedMood = '';
             let selectedLanguage = '';
@@ -515,6 +599,7 @@
                 '焦慮': '😰',
                 '疲倦': '😪'
             };
+            let selectedScenario = '';
 
             // 在頁面加載時獲取最後一次的心情記錄
             function getLastMoodRecord() {
@@ -656,8 +741,69 @@
                 }
             });
 
+            function processMoodString(moodString) {
+                // 移除所有空白字符
+                moodString = moodString.trim();
+                // 分割字串（支援多種分隔符號）
+                return moodString.split(/[、，,;；]/g)
+                    .map(mood => mood.trim())
+                    .filter(mood => mood.length > 0);
+            }
+
+            function getRelatedScenarios(mood) {
+                return [...new Set(
+                    songDatabase
+                        .filter(song => song.情緒 === mood && song.情境)
+                        .map(song => song.情境)
+                )];
+            }
+
+            function updateScenarioSection(mood) {
+                const scenarios = getRelatedScenarios(mood);
+                if (scenarios.length > 0) {
+                    scenarioGrid.innerHTML = scenarios.map(scenario => `
+                        <div class="scenario-tag" data-scenario="${scenario}">
+                            ${scenario}
+                        </div>
+                    `).join('');
+
+                    // 綁定情境標籤點擊事件
+                    document.querySelectorAll('.scenario-tag').forEach(tag => {
+                        tag.addEventListener('click', () => {
+                            document.querySelectorAll('.scenario-tag').forEach(t =>
+                                t.classList.remove('selected'));
+                            tag.classList.add('selected');
+                            selectedScenario = tag.dataset.scenario;
+                            updateSelectedMoodDisplay();
+                        });
+                    });
+
+                    scenarioSection.style.display = 'block';
+                } else {
+                    scenarioSection.style.display = 'none';
+                }
+            }
+
+            function updateSelectedMoodDisplay() {
+                if (selectedMood) {
+                    const emoji = moodEmojis[selectedMood] || '😶';
+                    selectedMoodDisplay.querySelector('.selected-mood-emoji').textContent = emoji;
+                    selectedMoodDisplay.querySelector('.selected-mood-text').textContent = selectedMood;
+                    selectedMoodDisplay.querySelector('.selected-scenario').textContent =
+                        selectedScenario ? `情境: ${selectedScenario}` : '';
+                    selectedMoodDisplay.style.display = 'flex';
+                } else {
+                    selectedMoodDisplay.style.display = 'none';
+                }
+            }
+
             function generateMoodCards(moods) {
-                moodGrid.innerHTML = moods.map(mood => `
+                // 處理所有情緒字串，合併成一個不重複的陣列
+                const uniqueMoods = [...new Set(
+                    moods.flatMap(mood => processMoodString(mood))
+                )];
+
+                moodGrid.innerHTML = uniqueMoods.map(mood => `
                     <div class="mood-card" data-mood="${mood}">
                         <div class="mood-emoji">${moodEmojis[mood] || '😶'}</div>
                         <div class="mood-label">${mood}</div>
@@ -666,9 +812,13 @@
 
                 document.querySelectorAll('.mood-card').forEach(card => {
                     card.addEventListener('click', () => {
-                        document.querySelectorAll('.mood-card').forEach(c => c.classList.remove('selected'));
+                        document.querySelectorAll('.mood-card').forEach(c =>
+                            c.classList.remove('selected'));
                         card.classList.add('selected');
                         selectedMood = card.dataset.mood;
+                        selectedScenario = ''; // 重置情境選擇
+                        updateScenarioSection(selectedMood);
+                        updateSelectedMoodDisplay();
                     });
                 });
             }
@@ -683,6 +833,7 @@
                 const date = new Date().toLocaleString('zh-TW');
                 const moodEntry = {
                     mood: selectedMood,
+                    scenario: selectedScenario,
                     note,
                     date
                 };
@@ -703,6 +854,7 @@
                     <div class="mood-entry">
                         <p>
                             <strong>${entry.mood}</strong>
+                            ${entry.scenario ? `<span class="selected-scenario">| ${entry.scenario}</span>` : ''}
                             <span style="color: #666;">| ${entry.date}</span>
                         </p>
                         <p>${entry.note}</p>
