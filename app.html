@@ -953,16 +953,22 @@
             pointer-events: auto !important;
         }
 
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
         .reset-button {
-            display: block;
-            margin: 20px auto 0;
-            padding: 10px 25px;
             background: #f5f5f5;
             border: none;
-            border-radius: 25px;
-            font-size: 1em;
+            border-radius: 50px;
+            padding: 10px 20px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #333;
         }
 
         .reset-button:hover {
@@ -971,16 +977,21 @@
             transform: translateY(-2px);
         }
 
-        .subcategory-container {
-            position: relative;
-            padding-bottom: 60px;
+        .category-tabs {
+            display: flex;
+            gap: 10px;
         }
 
-        #reset-mood-button {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+        @media (max-width: 768px) {
+            .category-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .reset-button {
+                width: 100%;
+                margin-top: 10px;
+            }
         }
     </style>
 </head>
@@ -1157,34 +1168,34 @@
             function generateCategoryButtons() {
                 return `
                     <div class="mood-category-section">
-                        <div class="category-tabs">
-                            ${Object.entries(moodCategories).map(([category, data]) => `
-                                <div class="category-tab" data-category="${category}">
-                                    ${category}
-                                </div>
-                            `).join('')}
+                        <div class="category-header">
+                            <div class="category-tabs">
+                                ${Object.entries(moodCategories).map(([category, data]) => `
+                                    <div class="category-tab" data-category="${category}">
+                                        ${category}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button class="reset-button" style="display: none;">重新選擇</button>
                         </div>
                         <div class="subcategory-container">
                             <div id="mood-subcategory-grid"></div>
-                            <button id="reset-mood-button" class="reset-button" style="display: none;">
-                                重新選擇
-                            </button>
                         </div>
                     </div>
                 `;
             }
 
             function resetMoodSelection() {
-                selectedMood = null;
+                selectedMood = '';
                 document.querySelectorAll('.mood-card').forEach(card => {
                     card.classList.remove('selected');
                 });
+                document.querySelector('.reset-button').style.display = 'none';
                 document.querySelector('.subcategory-container').style.display = 'none';
-                document.querySelector('#reset-mood-button').style.display = 'none';
 
-                // 重置相關狀態
+                // 重置情境選擇
                 selectedScenarios.clear();
-                updateScenarioSection('');
+                updateScenarioSection(selectedMood);
                 updateSelectedMoodDisplay();
             }
 
@@ -1197,7 +1208,7 @@
                 moodGrid.innerHTML = generateCategoryButtons();
 
                 // 綁定重新選擇按鈕事件
-                const resetButton = document.querySelector('#reset-mood-button');
+                const resetButton = document.querySelector('.reset-button');
                 resetButton.addEventListener('click', resetMoodSelection);
 
                 // 綁定類別標籤懸停事件
@@ -1224,49 +1235,31 @@
                         selectedMood = moodCard.dataset.mood;
 
                         // 顯示重新選擇按鈕
-                        document.querySelector('#reset-mood-button').style.display = 'block';
+                        document.querySelector('.reset-button').style.display = 'block';
 
-                        // 更新相關狀態
                         selectedScenarios.clear();
                         updateScenarioSection(selectedMood);
                         updateSelectedMoodDisplay();
                     }
                 });
 
-                // 添加樣式
-                const styleSheet = document.createElement('style');
-                styleSheet.textContent = `
-                    .reset-button {
-                        display: block;
-                        margin: 20px auto 0;
-                        padding: 10px 25px;
-                        background: #f5f5f5;
-                        border: none;
-                        border-radius: 25px;
-                        font-size: 1em;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    }
+                // 監聽整個類別區域的懸停事件
+                const categorySection = document.querySelector('.mood-category-section');
+                const subcategoryContainer = document.querySelector('.subcategory-container');
 
-                    .reset-button:hover {
-                        background: #000;
-                        color: white;
-                        transform: translateY(-2px);
+                categorySection.addEventListener('mouseleave', () => {
+                    if (!selectedMood) {
+                        subcategoryContainer.style.display = 'none';
                     }
+                });
 
-                    .subcategory-container {
-                        position: relative;
-                        padding-bottom: 60px;
-                    }
-
-                    #reset-mood-button {
-                        position: absolute;
-                        bottom: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                    }
-                `;
-                document.head.appendChild(styleSheet);
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('mouseenter', () => {
+                        if (!selectedMood) {
+                            subcategoryContainer.style.display = 'block';
+                        }
+                    });
+                });
             }
 
             function showMoodSubcategories(allMoods, category) {
@@ -1389,12 +1382,12 @@
                         <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
                         <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
                        </div>
-                       ${filteredSongs.map(song => `
+                        ${filteredSongs.map(song => `
                         <div class="song-detail-card">
                             <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
                             <div class="song-info">
-                                <h3 class="song-title">${song.歌名}</h3>
-                                <p class="song-artist">${song.歌手}</p>
+                                    <h3 class="song-title">${song.歌名}</h3>
+                                    <p class="song-artist">${song.歌手}</p>
                                 <div class="song-stats">
                                     <div class="stat-item">
                                         <span>語言:</span>
@@ -1403,11 +1396,11 @@
                                     <div class="stat-item">
                                         <span>點閱率:</span>
                                         <strong>${formatViews(song.點閱率)}</strong>
-                                    </div>
+                                </div>
                                     <div class="stat-item">
                                         <span>情緒:</span>
                                         <strong>${song.情緒}</strong>
-                                    </div>
+                            </div>
                                     ${song.情境 ? `
                                     <div class="stat-item">
                                         <span>情境:</span>
@@ -1418,7 +1411,7 @@
                                 <div class="rating" data-song="${song.歌名}">
                                     ${Array(5).fill().map((_, i) => `
                                         <span class="star" data-rating="${i + 1}">★</span>
-                                    `).join('')}
+                        `).join('')}
                                 </div>
                                 <div class="song-rating-display"></div>
                                 <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
