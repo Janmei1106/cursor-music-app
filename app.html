@@ -482,6 +482,29 @@
             color: #666;
             font-style: italic;
         }
+
+        .recommendations-header {
+            margin-bottom: 20px;
+        }
+
+        .mood-match-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .song-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-item {
+            background-color: #f5f5f5;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 
@@ -654,11 +677,17 @@
 
                 // 篩選符合條件的歌曲：
                 // 1. 符合選擇的語言
-                // 2. 符合最後一次記錄的心情
-                let filteredSongs = songDatabase.filter(song =>
-                    song.語言 === selectedLanguage &&
-                    song.情緒 === lastMoodRecord.mood
-                );
+                // 2. 歌曲的情緒中包含最後一次記錄的心情
+                let filteredSongs = songDatabase.filter(song => {
+                    // 檢查語言
+                    if (song.語言 !== selectedLanguage) return false;
+
+                    // 處理歌曲的情緒（可能包含多個情緒）
+                    const songMoods = processMoodString(song.情緒);
+
+                    // 只要包含其中一個情緒即可
+                    return songMoods.includes(lastMoodRecord.mood);
+                });
 
                 // 根據點閱率排序（如果有點閱率的話）
                 filteredSongs.sort((a, b) => {
@@ -670,6 +699,7 @@
                 musicRecommendations.innerHTML = filteredSongs.length > 0
                     ? `<div class="recommendations-header">
                         <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage}歌曲：</h3>
+                        <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
                        </div>
                        ${filteredSongs.map(song => `
                         <div class="song-detail-card">
@@ -686,6 +716,12 @@
                                         <span>情緒:</span>
                                         <strong>${song.情緒}</strong>
                                     </div>
+                                    ${song.情境 ? `
+                                    <div class="stat-item">
+                                        <span>情境:</span>
+                                        <strong>${song.情境}</strong>
+                                    </div>
+                                    ` : ''}
                                 </div>
                                 <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
                                     在 YouTube 上播放
