@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日情緒記錄與音樂</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: '微軟正黑體', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .mood-selector {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .mood-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 2em;
+            transition: transform 0.2s;
+        }
+
+        .mood-button:hover {
+            transform: scale(1.2);
+        }
+
+        .note-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .mood-history {
+            margin-top: 20px;
+        }
+
+        .mood-entry {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .music-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .music-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .music-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .music-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .music-item img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        .music-info {
+            flex-grow: 1;
+        }
+
+        .music-title {
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .music-artist {
+            color: #666;
+            margin: 0;
+            font-size: 0.9em;
+        }
+
+        #music-player {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .filter-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .filter-label {
+            min-width: 80px;
+            font-weight: bold;
+        }
+
+        .filter-select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            flex-grow: 1;
+        }
+
+        .excel-upload {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #f8f9fa;
+        }
+
+        .excel-upload input {
+            display: none;
+        }
+
+        .excel-upload label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .excel-upload label:hover {
+            background-color: #2980b9;
+        }
+
+        .song-card {
+            display: flex;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .song-cover {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 15px;
+        }
+
+        .song-details {
+            flex-grow: 1;
+        }
+
+        .song-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+
+        .song-artist {
+            color: #666;
+            margin: 0 0 5px 0;
+        }
+
+        .song-lyrics {
+            font-size: 0.9em;
+            color: #777;
+            margin: 5px 0;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .song-tags {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .tag {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>每日情緒記錄與音樂推薦</h1>
+
+        <div class="excel-upload">
+            <input type="file" id="excel-file" accept=".xlsx,.xls">
+            <label for="excel-file">上傳音樂資料庫 (Excel檔案)</label>
+            <p id="upload-status"></p>
+        </div>
+
+        <div class="mood-selector">
+            <button class="mood-button" data-mood="很開心">😄</button>
+            <button class="mood-button" data-mood="開心">😊</button>
+            <button class="mood-button" data-mood="普通">😐</button>
+            <button class="mood-button" data-mood="不開心">😢</button>
+            <button class="mood-button" data-mood="生氣">😠</button>
+        </div>
+
+        <textarea class="note-input" placeholder="寫下今天的心情..." rows="4"></textarea>
+        <button class="submit-btn">記錄心情</button>
+
+        <div class="filter-section">
+            <h3>音樂篩選</h3>
+            <div class="filter-group">
+                <span class="filter-label">語言：</span>
+                <select id="language-filter" class="filter-select">
+                    <option value="">全部</option>
+                    <option value="中文">中文</option>
+                    <option value="英文">英文</option>
+                    <option value="日文">日文</option>
+                    <option value="韓文">韓文</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">情境：</span>
+                <select id="scenario-filter" class="filter-select">
+                    <option value="">全部</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="music-section">
+            <h2>心情配樂</h2>
+            <div id="music-player-container">
+                <audio id="music-player" controls>
+                    <source src="" type="audio/mpeg">
+                    您的瀏覽器不支持音頻播放器。
+                </audio>
+            </div>
+            <div id="music-recommendations"></div>
+        </div>
+
+        <div class="mood-history">
+            <h2>歷史記錄</h2>
+            <div id="history-container"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const moodButtons = document.querySelectorAll('.mood-button');
+            const noteInput = document.querySelector('.note-input');
+            const submitBtn = document.querySelector('.submit-btn');
+            const historyContainer = document.getElementById('history-container');
+            const musicRecommendations = document.getElementById('music-recommendations');
+            const musicPlayer = document.getElementById('music-player');
+            const excelFileInput = document.getElementById('excel-file');
+            const uploadStatus = document.getElementById('upload-status');
+            const languageFilter = document.getElementById('language-filter');
+            const scenarioFilter = document.getElementById('scenario-filter');
+
+            let selectedMood = '';
+            let songDatabase = [];
+
+            excelFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadStatus.textContent = '正在處理檔案...';
+                    try {
+                        const data = await file.arrayBuffer();
+                        const workbook = XLSX.read(data);
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        songDatabase = XLSX.utils.sheet_to_json(worksheet);
+
+                        const scenarios = new Set(songDatabase.map(song => song.情境).filter(Boolean));
+                        scenarioFilter.innerHTML = '<option value="">全部</option>' +
+                            Array.from(scenarios).map(scenario =>
+                                `<option value="${scenario}">${scenario}</option>`
+                            ).join('');
+
+                        uploadStatus.textContent = '音樂資料庫已更新！';
+
+                        if (selectedMood) {
+                            updateMusicRecommendations(selectedMood);
+                        }
+                    } catch (error) {
+                        uploadStatus.textContent = '處理檔案時發生錯誤，請確認檔案格式是否正確。';
+                        console.error('Error processing Excel file:', error);
+                    }
+                }
+            });
+
+            languageFilter.addEventListener('change', () => {
+                if (selectedMood) updateMusicRecommendations(selectedMood);
+            });
+
+            scenarioFilter.addEventListener('change', () => {
+                if (selectedMood) updateMusicRecommendations(selectedMood);
+            });
+
+            moodButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    selectedMood = button.dataset.mood;
+                    moodButtons.forEach(btn => btn.style.opacity = '0.5');
+                    button.style.opacity = '1';
+                    updateMusicRecommendations(selectedMood);
+                });
+            });
+
+            function updateMusicRecommendations(mood) {
+                if (songDatabase.length === 0) {
+                    musicRecommendations.innerHTML = '<p>請先上傳音樂資料庫！</p>';
+                    return;
+                }
+
+                const language = languageFilter.value;
+                const scenario = scenarioFilter.value;
+
+                let filteredSongs = songDatabase.filter(song => song.情緒 === mood);
+
+                if (language) {
+                    filteredSongs = filteredSongs.filter(song => song.語言 === language);
+                }
+                if (scenario) {
+                    filteredSongs = filteredSongs.filter(song => song.情境 === scenario);
+                }
+
+                musicRecommendations.innerHTML = filteredSongs.length > 0
+                    ? `<div class="song-list">
+                        ${filteredSongs.map(song => `
+                            <div class="song-card">
+                                <img src="${song.封面圖片}" alt="${song.歌名}" class="song-cover">
+                                <div class="song-details">
+                                    <h3 class="song-title">${song.歌名}</h3>
+                                    <p class="song-artist">${song.歌手}</p>
+                                    <p class="song-lyrics">${song.歌詞}</p>
+                                    <div class="song-tags">
+                                        <span class="tag">${song.語言}</span>
+                                        <span class="tag">${song.情境}</span>
+                                        <span class="tag">${song.情緒}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                       </div>`
+                    : '<p>沒有找到符合條件的歌曲</p>';
+            }
+
+            submitBtn.addEventListener('click', () => {
+                if (!selectedMood) {
+                    alert('請選擇一個心情！');
+                    return;
+                }
+
+                const note = noteInput.value;
+                const date = new Date().toLocaleString('zh-TW');
+                const moodEntry = { mood: selectedMood, note, date };
+
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                moodHistory.unshift(moodEntry);
+                localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
+
+                updateHistory();
+                resetForm();
+            });
+
+            function updateHistory() {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                historyContainer.innerHTML = moodHistory.map(entry => `
+                    <div class="mood-entry">
+                        <p>${entry.mood} - ${entry.date}</p>
+                        <p>${entry.note}</p>
+                    </div>
+                `).join('');
+            }
+
+            function resetForm() {
+                selectedMood = '';
+                noteInput.value = '';
+                moodButtons.forEach(btn => btn.style.opacity = '1');
+                musicRecommendations.innerHTML = '';
+            }
+
+            updateHistory();
+        });
+    </script>
+</body>
+
+</html>
