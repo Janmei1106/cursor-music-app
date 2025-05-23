@@ -502,6 +502,7 @@
             let selectedMood = '';
             let selectedLanguage = '';
             let songDatabase = [];
+            let lastMoodRecord = null;
             let moodEmojis = {
                 '很開心': '😄',
                 '開心': '😊',
@@ -515,6 +516,12 @@
                 '疲倦': '😪'
             };
 
+            // 在頁面加載時獲取最後一次的心情記錄
+            function getLastMoodRecord() {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                return moodHistory.length > 0 ? moodHistory[0] : null;
+            }
+
             // 頁面導航
             navButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -523,9 +530,12 @@
                         return;
                     }
 
-                    if (button.dataset.page === 'page-music' && !selectedMood) {
-                        alert('請先記錄心情！');
-                        return;
+                    if (button.dataset.page === 'page-music') {
+                        lastMoodRecord = getLastMoodRecord();
+                        if (!lastMoodRecord) {
+                            alert('請先記錄心情！');
+                            return;
+                        }
                     }
 
                     navButtons.forEach(btn => btn.classList.remove('active'));
@@ -536,7 +546,85 @@
                 });
             });
 
-            // 處理 Excel 檔案上傳
+            // 處理語言卡片選擇
+            languageCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    languageCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedLanguage = card.dataset.language;
+
+                    // 獲取最後一次的心情記錄
+                    lastMoodRecord = getLastMoodRecord();
+                    if (!lastMoodRecord) {
+                        alert('請先記錄心情！');
+                        return;
+                    }
+
+                    updateMusicRecommendations();
+                });
+            });
+
+            function updateMusicRecommendations() {
+                if (!lastMoodRecord) return;
+
+                // 篩選符合條件的歌曲：
+                // 1. 符合選擇的語言
+                // 2. 符合最後一次記錄的心情
+                let filteredSongs = songDatabase.filter(song =>
+                    song.語言 === selectedLanguage &&
+                    song.情緒 === lastMoodRecord.mood
+                );
+
+                // 根據點閱率排序（如果有點閱率的話）
+                filteredSongs.sort((a, b) => {
+                    const viewsA = parseInt(a.點閱率) || 0;
+                    const viewsB = parseInt(b.點閱率) || 0;
+                    return viewsB - viewsA;
+                });
+
+                musicRecommendations.innerHTML = filteredSongs.length > 0
+                    ? `<div class="recommendations-header">
+                        <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage}歌曲：</h3>
+                       </div>
+                       ${filteredSongs.map(song => `
+                        <div class="song-detail-card">
+                            <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
+                            <div class="song-info">
+                                <h3 class="song-title">${song.歌名}</h3>
+                                <p class="song-artist">${song.歌手}</p>
+                                <div class="song-stats">
+                                    <div class="stat-item">
+                                        <span>點閱率:</span>
+                                        <strong>${formatViews(song.點閱率)}</strong>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span>情緒:</span>
+                                        <strong>${song.情緒}</strong>
+                                    </div>
+                                </div>
+                                <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
+                                    在 YouTube 上播放
+                                </a>
+                            </div>
+                        </div>
+                    `).join('')}`
+                    : `<p>沒有找到符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage}歌曲</p>`;
+            }
+
+            // 格式化點閱率顯示
+            function formatViews(views) {
+                if (!views) return 'N/A';
+                const num = parseInt(views);
+                if (isNaN(num)) return views;
+                if (num >= 100000000) {
+                    return (num / 100000000).toFixed(1) + '億';
+                } else if (num >= 10000) {
+                    return (num / 10000).toFixed(1) + '萬';
+                }
+                return num.toLocaleString();
+            }
+
+            // Excel 檔案上傳處理
             excelFileInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -557,7 +645,6 @@
                         uploadStatus.textContent = '音樂資料庫已更新！';
                         uploadStatus.style.color = '#4CAF50';
 
-                        // 自動切換到心情記錄頁面
                         setTimeout(() => {
                             document.querySelector('[data-page="page-mood"]').click();
                         }, 1000);
@@ -586,51 +673,6 @@
                 });
             }
 
-            languageCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    languageCards.forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    selectedLanguage = card.dataset.language;
-                    updateMusicRecommendations();
-                });
-            });
-
-            function updateMusicRecommendations() {
-                let filteredSongs = songDatabase.filter(song => song.情緒 === selectedMood);
-                if (selectedLanguage) {
-                    filteredSongs = filteredSongs.filter(song => song.語言 === selectedLanguage);
-                }
-
-                musicRecommendations.innerHTML = filteredSongs.length > 0
-                    ? filteredSongs.map(song => `
-                        <div class="song-detail-card">
-                            <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
-                            <div class="song-info">
-                                <h3 class="song-title">${song.歌名}</h3>
-                                <p class="song-artist">${song.歌手}</p>
-                                <div class="song-stats">
-                                    <div class="stat-item">
-                                        <span>情緒:</span>
-                                        <strong>${song.情緒}</strong>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span>情境:</span>
-                                        <strong>${song.情境 || '一般'}</strong>
-                                    </div>
-                                    <div class="stat-item">
-                                        <span>點閱率:</span>
-                                        <strong>${song.點閱率 || 'N/A'}</strong>
-                                    </div>
-                                </div>
-                                <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
-                                    在 YouTube 上播放
-                                </a>
-                            </div>
-                        </div>
-                    `).join('')
-                    : '<p>沒有找到符合條件的歌曲</p>';
-            }
-
             submitBtn.addEventListener('click', () => {
                 if (!selectedMood) {
                     alert('請選擇一個心情！');
@@ -650,8 +692,8 @@
                 localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
 
                 updateHistory();
+                lastMoodRecord = moodEntry;
 
-                // 自動切換到音樂推薦頁面
                 document.querySelector('[data-page="page-music"]').click();
             });
 
@@ -668,7 +710,9 @@
                 `).join('');
             }
 
+            // 初始化
             updateHistory();
+            lastMoodRecord = getLastMoodRecord();
         });
     </script>
 </body>
