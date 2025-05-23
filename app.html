@@ -853,8 +853,13 @@
             function getRelatedScenarios(mood) {
                 return [...new Set(
                     songDatabase
-                        .filter(song => song.情緒 === mood && song.情境)
-                        .map(song => song.情境)
+                        .filter(song => {
+                            // 處理歌曲的情緒字串
+                            const songMoods = processMoodString(song.情緒);
+                            // 只有當歌曲的情緒包含所選情緒時才返回其情境
+                            return songMoods.includes(mood) && song.情境;
+                        })
+                        .flatMap(song => processMoodString(song.情境))
                 )];
             }
 
