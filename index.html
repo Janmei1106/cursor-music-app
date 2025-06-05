@@ -1587,6 +1587,153 @@
                 transform: translateY(0);
             }
         }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 0 10px;
+        }
+
+        .history-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .user-search {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-input {
+            padding: 8px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #2c3e50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+
+        .search-btn {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+        .search-results.show {
+            display: block;
+        }
+
+        .result-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .no-results {
+            padding: 15px;
+            text-align: center;
+            color: #666;
+        }
+
+        .filtered-records {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filtered-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filtered-title {
+            font-size: 1.1em;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .clear-filter {
+            color: #e74c3c;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .clear-filter:hover {
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .history-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .user-search {
+                flex-direction: column;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .search-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -2482,9 +2629,36 @@
                 }
             });
 
-            function updateHistory() {
+            function updateHistory(filterNickname = null) {
                 const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-                historyContainer.innerHTML = moodHistory.map(entry => `
+                let filteredHistory = moodHistory;
+
+                if (filterNickname) {
+                    filteredHistory = moodHistory.filter(entry => entry.nickname === filterNickname);
+                }
+
+                // 更新歷史記錄標題區域
+                const historyHeaderHtml = `
+                    <div class="history-header">
+                        <h2 class="history-title">歷史記錄</h2>
+                        <div class="user-search">
+                            <input type="text" class="search-input" placeholder="搜尋使用者暱稱...">
+                            <button class="search-btn">查詢</button>
+                            <div class="search-results"></div>
+                        </div>
+                    </div>
+                    ${filterNickname ? `
+                        <div class="filtered-records">
+                            <div class="filtered-header">
+                                <span class="filtered-title">顯示 ${filterNickname} 的記錄</span>
+                                <button class="clear-filter">清除篩選</button>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+
+                // 更新歷史記錄內容
+                historyContainer.innerHTML = historyHeaderHtml + filteredHistory.map(entry => `
                     <div class="mood-entry">
                         <div class="entry-header">
                             ${entry.nickname && entry.nickname !== '匿名用戶' ?
@@ -2507,7 +2681,7 @@
                             <div class="song-ratings">
                                 <p><strong>歌曲評分：</strong></p>
                                 <div class="rating-list">
-                                ${entry.songRatings.map(rating => `
+                                    ${entry.songRatings.map(rating => `
                                         <div class="rating-item">
                                             <span class="song-name">${rating.songName}</span>
                                             <span class="rating-stars">
@@ -2515,12 +2689,95 @@
                                                 ${Array(5 - rating.rating).fill('☆').join('')}
                                             </span>
                                         </div>
-                                `).join('')}
+                                    `).join('')}
                                 </div>
                             </div>
                         ` : ''}
                     </div>
                 `).join('');
+
+                // 綁定搜尋相關事件
+                bindSearchEvents();
+            }
+
+            function bindSearchEvents() {
+                const searchInput = document.querySelector('.search-input');
+                const searchBtn = document.querySelector('.search-btn');
+                const searchResults = document.querySelector('.search-results');
+                const clearFilter = document.querySelector('.clear-filter');
+
+                if (searchInput && searchBtn) {
+                    // 搜尋框輸入事件
+                    searchInput.addEventListener('input', () => {
+                        const query = searchInput.value.trim().toLowerCase();
+                        if (query.length > 0) {
+                            showSearchResults(query);
+                        } else {
+                            searchResults.classList.remove('show');
+                        }
+                    });
+
+                    // 搜尋按鈕點擊事件
+                    searchBtn.addEventListener('click', () => {
+                        const query = searchInput.value.trim();
+                        if (query) {
+                            filterHistoryByNickname(query);
+                        }
+                    });
+
+                    // 點擊其他地方關閉搜尋結果
+                    document.addEventListener('click', (e) => {
+                        if (!e.target.closest('.user-search')) {
+                            searchResults.classList.remove('show');
+                        }
+                    });
+                }
+
+                // 清除篩選按鈕事件
+                if (clearFilter) {
+                    clearFilter.addEventListener('click', () => {
+                        updateHistory();
+                    });
+                }
+            }
+
+            function showSearchResults(query) {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                const uniqueNicknames = [...new Set(moodHistory
+                    .map(entry => entry.nickname)
+                    .filter(nickname => nickname && nickname.toLowerCase().includes(query))
+                )];
+
+                const searchResults = document.querySelector('.search-results');
+                if (uniqueNicknames.length > 0) {
+                    searchResults.innerHTML = uniqueNicknames
+                        .map(nickname => `
+                            <div class="result-item" data-nickname="${nickname}">
+                                ${nickname}
+                            </div>
+                        `).join('');
+
+                    // 綁定結果項點擊事件
+                    searchResults.querySelectorAll('.result-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            filterHistoryByNickname(item.dataset.nickname);
+                            searchResults.classList.remove('show');
+                        });
+                    });
+                } else {
+                    searchResults.innerHTML = `
+                        <div class="no-results">
+                            沒有找到相關使用者
+                        </div>
+                    `;
+                }
+
+                searchResults.classList.add('show');
+            }
+
+            function filterHistoryByNickname(nickname) {
+                updateHistory(nickname);
+                document.querySelector('.search-input').value = nickname;
             }
 
             // 評分系統的反饋訊息
