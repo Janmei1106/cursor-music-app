@@ -1070,15 +1070,11 @@
         }
 
         .finish-record-sticky {
-            position: sticky;
-            top: 20px;
-            z-index: 100;
             text-align: center;
-            margin: 20px 0;
+            margin: 20px 0 10px 0;
             padding: 10px;
             background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95));
             border-radius: 12px;
-            backdrop-filter: blur(5px);
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
@@ -1119,6 +1115,14 @@
                 padding: 10px 20px;
                 font-size: 1em;
             }
+        }
+
+        .current-mood-record {
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
@@ -1182,12 +1186,6 @@
                     <button class="choice-button" data-language="日文">日文</button>
                     <button class="choice-button" data-language="韓文">韓文</button>
                 </div>
-            </div>
-            <div class="finish-record-sticky">
-                <button class="finish-record-btn">
-                    <span class="btn-icon">✓</span>
-                    完成紀錄
-                </button>
             </div>
             <div id="music-recommendations"></div>
         </div>
@@ -1554,7 +1552,6 @@
                         <div class="current-mood-record">
                             <div class="record-header">
                                 <h3>本次心情記錄</h3>
-                                <button class="history-button">查看歷史記錄</button>
                             </div>
                             <div class="mood-entry">
                                 <p>
@@ -1568,11 +1565,25 @@
                                 ${latestMood.songRatings && latestMood.songRatings.length > 0 ? `
                                     <div class="song-ratings">
                                         <p><strong>歌曲評分：</strong></p>
-                                        ${latestMood.songRatings.map(rating => `
-                                            <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
-                                        `).join('')}
+                                        <div class="rating-list">
+                                            ${latestMood.songRatings.map(rating => `
+                                                <div class="rating-item">
+                                                    <span class="song-name">${rating.songName}</span>
+                                                    <span class="rating-stars">
+                                                        ${Array(rating.rating).fill('★').join('')}
+                                                        ${Array(5 - rating.rating).fill('☆').join('')}
+                                                    </span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
                                     </div>
                                 ` : ''}
+                            </div>
+                            <div class="finish-record-sticky">
+                                <button class="finish-record-btn">
+                                    <span class="btn-icon">✓</span>
+                                    完成紀錄
+                                </button>
                             </div>
                         </div>
                     `;
