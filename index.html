@@ -912,14 +912,15 @@
         .star {
             font-size: 1.5em;
             cursor: pointer;
-            color: #bdc3c7;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            color: #2c3e50;
+            text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             user-select: none;
             display: inline-block;
             width: 1.2em;
             text-align: center;
+            -webkit-text-stroke: 1px #2c3e50;
         }
 
         .star::before {
@@ -933,6 +934,7 @@
             transform: scale(1.1);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+            -webkit-text-stroke: 0;
         }
 
         .star:hover,
@@ -940,6 +942,7 @@
             color: #FFD700;
             transform: scale(1.1);
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            -webkit-text-stroke: 0;
         }
 
         .star.active::before {
@@ -948,15 +951,27 @@
         }
 
         .star:hover~.star {
-            color: #bdc3c7;
+            color: #2c3e50;
         }
 
         /* 未選中星星的樣式 */
         .star:not(.active):not(:hover) {
-            background: linear-gradient(45deg, transparent 45%, #95a5a6 50%, transparent 55%);
+            background: linear-gradient(45deg, transparent 45%, #2c3e50 50%, transparent 55%);
             -webkit-background-clip: text;
             color: transparent;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        /* 添加星星外框效果 */
+        .star:not(.active):not(:hover)::after {
+            content: '☆';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            color: #2c3e50;
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
         }
 
         .rating-feedback {
