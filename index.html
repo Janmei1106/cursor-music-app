@@ -1124,6 +1124,73 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
+
+        .rating-progress-container {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .rating-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .progress-text {
+            font-size: 1.1em;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .finish-record-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .finish-record-btn:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-icon {
+            font-size: 1.2em;
+            line-height: 1;
+        }
+
+        @media (max-width: 768px) {
+            .rating-progress {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .progress-text {
+                font-size: 1em;
+            }
+
+            .finish-record-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 
@@ -2132,6 +2199,9 @@
 
                 // 更新心情記錄中的評分
                 updateMoodRecordRating(songName, rating);
+
+                // 檢查是否所有推薦的歌曲都已評分
+                checkAllSongsRated();
             }
 
             // 獲取當前評分
@@ -2208,6 +2278,73 @@
             // 初始化
             updateHistory();
             lastMoodRecord = getLastMoodRecord();
+
+            // 添加檢查所有歌曲是否都已評分的函數
+            function checkAllSongsRated() {
+                const recommendedSongs = document.querySelectorAll('.song-detail-card');
+                const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
+                let allRated = true;
+                let ratedCount = 0;
+
+                recommendedSongs.forEach(songCard => {
+                    const songTitle = songCard.querySelector('.song-title').textContent;
+                    if (ratings[songTitle] && ratings[songTitle].rating > 0) {
+                        ratedCount++;
+                    } else {
+                        allRated = false;
+                    }
+                });
+
+                // 更新或顯示完成評分提示
+                updateRatingProgress(ratedCount, recommendedSongs.length);
+            }
+
+            // 添加更新評分進度的函數
+            function updateRatingProgress(rated, total) {
+                let progressContainer = document.querySelector('.rating-progress-container');
+
+                if (!progressContainer) {
+                    // 如果容器不存在，創建一個新的
+                    progressContainer = document.createElement('div');
+                    progressContainer.className = 'rating-progress-container';
+                    const musicRecommendations = document.getElementById('music-recommendations');
+                    musicRecommendations.insertBefore(progressContainer, musicRecommendations.firstChild);
+                }
+
+                progressContainer.innerHTML = `
+                    <div class="rating-progress">
+                        <div class="progress-text">
+                            已評分 ${rated}/${total} 首歌曲
+                        </div>
+                        ${rated > 0 ? `
+                            <div class="finish-record-sticky">
+                                <button class="finish-record-btn">
+                                    <span class="btn-icon">✓</span>
+                                    完成紀錄
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                // 綁定完成紀錄按鈕事件
+                const finishRecordBtn = progressContainer.querySelector('.finish-record-btn');
+                if (finishRecordBtn) {
+                    finishRecordBtn.addEventListener('click', () => {
+                        const moodPageButton = document.querySelector('[data-page="page-mood"]');
+                        if (moodPageButton) {
+                            moodPageButton.click();
+                            updateHistory();
+                            const historyContainer = document.getElementById('history-container');
+                            if (historyContainer) {
+                                setTimeout(() => {
+                                    historyContainer.scrollIntoView({ behavior: 'smooth' });
+                                }, 100);
+                            }
+                        }
+                    });
+                }
+            }
         });
     </script>
 </body>
