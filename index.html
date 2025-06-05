@@ -1297,15 +1297,8 @@
                     tag.classList.remove('selected');
                 });
 
-                const countDisplay = document.querySelector('.selected-count span');
-                if (countDisplay) {
-                    countDisplay.textContent = '0';
-                }
-
                 document.querySelector('.subcategory-container').style.display = 'none';
-                document.querySelector('.reset-button').style.display = 'none';
 
-                updateScenarioSection(selectedMood);
                 updateSelectedMoodDisplay();
             }
 
@@ -1412,7 +1405,7 @@
                 )];
             }
 
-            // 生成情境按鈕
+            // 修改情境按鈕生成函數
             function generateScenarioButtons() {
                 const scenarios = getAllScenarios();
                 const scenarioCategories = {
@@ -1430,7 +1423,8 @@
                                 <div class="category-row">
                                     <span class="scenario-category">${category}</span>
                                     ${items.map(scenario => `
-                                        <div class="scenario-tag" data-scenario="${scenario}">
+                                        <div class="scenario-tag${selectedScenarios.has(scenario) ? ' selected' : ''}" 
+                                             data-scenario="${scenario}">
                                             ${scenario}
                                         </div>
                                     `).join('')}
@@ -1443,13 +1437,14 @@
                 // 綁定情境標籤點擊事件
                 document.querySelectorAll('.scenario-tag').forEach(tag => {
                     tag.addEventListener('click', () => {
-                        tag.classList.toggle('selected');
                         const scenario = tag.dataset.scenario;
 
-                        if (tag.classList.contains('selected')) {
-                            selectedScenarios.add(scenario);
-                        } else {
+                        if (selectedScenarios.has(scenario)) {
                             selectedScenarios.delete(scenario);
+                            tag.classList.remove('selected');
+                        } else {
+                            selectedScenarios.add(scenario);
+                            tag.classList.add('selected');
                         }
 
                         updateSelectedMoodDisplay();
@@ -1781,6 +1776,16 @@
                         `;
                         moodDisplay.style.display = 'flex';
                     }
+
+                    // 更新所有情境按鈕的選中狀態
+                    document.querySelectorAll('.scenario-tag').forEach(tag => {
+                        const scenario = tag.dataset.scenario;
+                        if (selectedScenarios.has(scenario)) {
+                            tag.classList.add('selected');
+                        } else {
+                            tag.classList.remove('selected');
+                        }
+                    });
                 } else {
                     const moodDisplay = document.querySelector('.selected-mood-display');
                     if (moodDisplay) {
