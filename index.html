@@ -507,7 +507,7 @@
             background: white;
             border: 1px solid #e2e8f0;
             border-radius: 50px;
-            padding: 7px 18px;
+            padding: 8px 20px;
             font-size: 0.92em;
             color: #4a5568;
             cursor: pointer;
@@ -522,16 +522,13 @@
             font-weight: 600;
         }
 
-        .scenario-tag::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: currentColor;
-            opacity: 0;
-            transition: opacity 0.2s ease;
+        .scenario-tag.selected {
+            background: #2d3748;
+            color: white;
+            border-color: #2d3748;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(45, 55, 72, 0.2);
+            transform: translateY(-1px);
         }
 
         .scenario-tag:hover {
@@ -541,73 +538,24 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
         }
 
-        .scenario-tag:hover::before {
-            opacity: 0.04;
-        }
-
-        .scenario-tag:active {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-        }
-
-        .scenario-tag.selected {
-            background: #2d3748;
-            color: white;
-            border-color: #2d3748;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(45, 55, 72, 0.2);
-        }
-
         .scenario-tag.selected:hover {
             background: #1a202c;
             border-color: #1a202c;
+            color: white;
             transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(45, 55, 72, 0.25);
         }
 
-        .scenario-tag.selected:active {
-            transform: translateY(-1px);
-        }
-
-        /* 情境標籤內容布局 */
-        .scenario-tag-content {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* 選中圖標 */
-        .scenario-tag::after {
-            content: '✓';
-            margin-left: 4px;
-            opacity: 0;
-            transform: scale(0.8);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-block;
-            font-size: 0.9em;
-        }
-
-        .scenario-tag.selected::after {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        /* 分類行間距優化 */
+        /* 情境分類樣式 */
         .category-row {
             display: flex;
             align-items: center;
-            margin-bottom: 18px;
             flex-wrap: wrap;
             gap: 10px;
+            margin-bottom: 15px;
             padding: 4px 0;
         }
 
-        .category-row:last-child {
-            margin-bottom: 10px;
-        }
-
-        /* 情境分類標籤美化 */
         .scenario-category {
             color: #4a5568;
             font-size: 0.95em;
@@ -617,7 +565,6 @@
             min-width: 45px;
             padding-right: 12px;
             position: relative;
-            letter-spacing: 0.3px;
         }
 
         .scenario-category::after {
@@ -629,6 +576,13 @@
             width: 1px;
             height: 16px;
             background: linear-gradient(to bottom, transparent, #e2e8f0, transparent);
+        }
+
+        .scenario-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
         }
 
         @media (max-width: 768px) {
@@ -1462,32 +1416,19 @@
             function generateScenarioButtons() {
                 const scenarios = getAllScenarios();
                 const scenarioCategories = {
-                    '日常': ['工作', '學習', '休閒', '運動', '旅行', '購物'],
-                    '社交': ['約會', '聚會', '家庭', '朋友'],
-                    '心情': ['放鬆', '專注', '激勵', '療癒'],
-                    '其他': []
+                    '舞台表演': ['舞台表演', '派對氛圍', '節奏感十足', '熱情升溫', '主動出擊'],
+                    '浪漫': ['初戀告白', '尋求愛情的肯定回應', '愛情追逐', '西班牙風情'],
+                    '夏日': ['夏日夜晚', '夏日戀愛', '夏日派對', '夏日遊逛'],
+                    '舞蹈': ['海邊狂舞', '舞池情緒', '舞池擺動', '街頭舞蹈'],
+                    '其他': ['展現自信', '自我肯定', '關注內在的真實自我', '打破刻板印象']
                 };
-
-                // 將情境分類
-                scenarios.forEach(scenario => {
-                    let categorized = false;
-                    for (let category in scenarioCategories) {
-                        if (scenarioCategories[category].includes(scenario)) {
-                            categorized = true;
-                            break;
-                        }
-                    }
-                    if (!categorized) {
-                        scenarioCategories['其他'].push(scenario);
-                    }
-                });
 
                 scenarioGrid.innerHTML = `
                     <div class="scenario-container">
                         ${Object.entries(scenarioCategories).map(([category, items]) =>
                     items.length ? `
                                 <div class="category-row">
-                                    <span class="scenario-category">${category}:</span>
+                                    <span class="scenario-category">${category}</span>
                                     ${items.map(scenario => `
                                         <div class="scenario-tag" data-scenario="${scenario}">
                                             ${scenario}
@@ -1502,18 +1443,14 @@
                 // 綁定情境標籤點擊事件
                 document.querySelectorAll('.scenario-tag').forEach(tag => {
                     tag.addEventListener('click', () => {
-                        // 移除所有標籤的選中狀態
-                        document.querySelectorAll('.scenario-tag').forEach(t => {
-                            t.classList.remove('selected');
-                        });
-
-                        // 選中當前標籤
-                        tag.classList.add('selected');
+                        tag.classList.toggle('selected');
                         const scenario = tag.dataset.scenario;
 
-                        // 清空並設置新的選中情境
-                        selectedScenarios.clear();
-                        selectedScenarios.add(scenario);
+                        if (tag.classList.contains('selected')) {
+                            selectedScenarios.add(scenario);
+                        } else {
+                            selectedScenarios.delete(scenario);
+                        }
 
                         updateSelectedMoodDisplay();
                     });
@@ -1827,17 +1764,20 @@
                 }
             }
 
+            // 更新選中情境顯示
             function updateSelectedMoodDisplay() {
                 if (selectedMood) {
                     const emoji = getEmoticonForMood(selectedMood);
-                    const scenario = selectedScenarios.size > 0 ? Array.from(selectedScenarios)[0] : '';
+                    const scenarios = Array.from(selectedScenarios);
 
                     const moodDisplay = document.querySelector('.selected-mood-display');
                     if (moodDisplay) {
                         moodDisplay.innerHTML = `
                             <div class="selected-mood-emoji">${emoji}</div>
                             <div class="selected-mood-text">${selectedMood}</div>
-                            ${scenario ? `<div class="selected-scenario">情境: ${scenario}</div>` : ''}
+                            ${scenarios.length > 0 ?
+                                `<div class="selected-scenario">情境: ${scenarios.join('、')}</div>`
+                                : ''}
                         `;
                         moodDisplay.style.display = 'flex';
                     }
