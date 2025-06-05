@@ -1333,6 +1333,50 @@
                 width: 100%;
             }
         }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .record-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-avatar-small {
+            width: 24px;
+            height: 24px;
+            background: #2c3e50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .user-name-small {
+            color: #2c3e50;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        .entry-time {
+            color: #666;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 
@@ -2190,7 +2234,7 @@
 
                 const note = noteInput.value;
                 const date = new Date().toLocaleString('zh-TW');
-                const nickname = localStorage.getItem('userNickname');
+                const nickname = localStorage.getItem('userNickname') || '匿名用戶';
                 const moodEntry = {
                     mood: selectedMood,
                     scenarios: Array.from(selectedScenarios),
@@ -2232,20 +2276,37 @@
                 const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
                 historyContainer.innerHTML = moodHistory.map(entry => `
                     <div class="mood-entry">
+                        <div class="entry-header">
+                            ${entry.nickname && entry.nickname !== '匿名用戶' ?
+                        `<div class="record-user">
+                                    <div class="user-avatar-small">${entry.nickname.charAt(0)}</div>
+                                    <span class="user-name-small">${entry.nickname}</span>
+                                </div>` :
+                        ''
+                    }
+                            <div class="entry-time">${entry.date}</div>
+                        </div>
                         <p>
                             <strong>${entry.mood}</strong>
                             ${entry.scenarios && entry.scenarios.length > 0
                         ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
                         : ''}
-                            <span style="color: #666;">| ${entry.date}</span>
                         </p>
                         <p>${entry.note}</p>
                         ${entry.songRatings && entry.songRatings.length > 0 ? `
                             <div class="song-ratings">
                                 <p><strong>歌曲評分：</strong></p>
-                                ${entry.songRatings.map(rating => `
-                                    <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
-                                `).join('')}
+                                <div class="rating-list">
+                                    ${entry.songRatings.map(rating => `
+                                        <div class="rating-item">
+                                            <span class="song-name">${rating.songName}</span>
+                                            <span class="rating-stars">
+                                                ${Array(rating.rating).fill('★').join('')}
+                                                ${Array(5 - rating.rating).fill('☆').join('')}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
                         ` : ''}
                     </div>
@@ -2408,6 +2469,13 @@
                     currentMoodRecord.innerHTML = `
                         <div class="record-header">
                             <h3>本次心情記錄</h3>
+                            ${moodRecord.nickname && moodRecord.nickname !== '匿名用戶' ?
+                            `<div class="record-user">
+                                    <div class="user-avatar-small">${moodRecord.nickname.charAt(0)}</div>
+                                    <span class="user-name-small">${moodRecord.nickname}</span>
+                                </div>` :
+                            ''
+                        }
                         </div>
                         <div class="mood-entry">
                             <p>
@@ -2430,7 +2498,7 @@
                                                     ${Array(5 - rating.rating).fill('☆').join('')}
                                                 </span>
                                             </div>
-                                    `).join('')}
+                                        `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
