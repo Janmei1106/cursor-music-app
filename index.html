@@ -1068,6 +1068,58 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
         }
+
+        .finish-record-sticky {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95));
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .finish-record-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            font-size: 1.2em;
+            line-height: 1;
+        }
+
+        .finish-record-btn:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .finish-record-sticky {
+                top: 10px;
+                margin: 10px 0;
+            }
+
+            .finish-record-btn {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
     </style>
 </head>
 
@@ -1131,10 +1183,13 @@
                     <button class="choice-button" data-language="韓文">韓文</button>
                 </div>
             </div>
-            <div id="music-recommendations"></div>
-            <div class="finish-record-container">
-                <button class="finish-record-btn">完成紀錄</button>
+            <div class="finish-record-sticky">
+                <button class="finish-record-btn">
+                    <span class="btn-icon">✓</span>
+                    完成紀錄
+                </button>
             </div>
+            <div id="music-recommendations"></div>
         </div>
     </div>
 
