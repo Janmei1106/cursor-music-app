@@ -1734,6 +1734,142 @@
                 width: 100%;
             }
         }
+
+        .clear-history-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .clear-history-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 auto;
+        }
+
+        .clear-history-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .password-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+            min-width: 300px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .password-dialog.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .password-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+
+        .password-input:focus {
+            border-color: #2c3e50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+
+        .password-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .password-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .confirm-password {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .cancel-password {
+            background: #e2e8f0;
+            color: #2c3e50;
+        }
+
+        .confirm-password:hover {
+            background: #c0392b;
+        }
+
+        .cancel-password:hover {
+            background: #cbd5e1;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: -15px;
+            margin-bottom: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .error-message.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .password-dialog {
+                width: 90%;
+                max-width: 400px;
+            }
+
+            .password-buttons {
+                flex-direction: column;
+            }
+
+            .password-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -2696,6 +2832,28 @@
                     </div>
                 `).join('');
 
+                // 添加清空記錄按鈕
+                historyContainer.innerHTML += `
+                    <div class="clear-history-section">
+                        <button class="clear-history-btn">
+                            <span class="btn-icon">🗑️</span>
+                            清空所有記錄
+                        </button>
+                    </div>
+                    <div class="password-dialog">
+                        <div class="password-title">請輸入管理員密碼</div>
+                        <input type="password" class="password-input" placeholder="輸入密碼" maxlength="6">
+                        <div class="error-message">密碼錯誤，請重試</div>
+                        <div class="password-buttons">
+                            <button class="password-btn confirm-password">確認</button>
+                            <button class="password-btn cancel-password">取消</button>
+                        </div>
+                    </div>
+                `;
+
+                // 綁定清空記錄按鈕事件
+                bindClearHistoryEvents();
+
                 // 綁定搜尋相關事件
                 bindSearchEvents();
             }
@@ -3343,6 +3501,59 @@
                     clearInterval(countdown);
                     exitApplication();
                 });
+            }
+
+            function bindClearHistoryEvents() {
+                const clearBtn = document.querySelector('.clear-history-btn');
+                const passwordDialog = document.querySelector('.password-dialog');
+                const passwordInput = document.querySelector('.password-input');
+                const confirmBtn = document.querySelector('.confirm-password');
+                const cancelBtn = document.querySelector('.cancel-password');
+                const errorMessage = document.querySelector('.error-message');
+                const overlay = document.querySelector('.dialog-overlay') || createOverlay();
+
+                clearBtn.addEventListener('click', () => {
+                    overlay.style.display = 'block';
+                    passwordDialog.classList.add('show');
+                    passwordInput.value = '';
+                    errorMessage.classList.remove('show');
+                });
+
+                confirmBtn.addEventListener('click', () => {
+                    const password = passwordInput.value;
+                    if (password === '931106') {
+                        localStorage.removeItem('moodHistory');
+                        passwordDialog.classList.remove('show');
+                        overlay.style.display = 'none';
+                        updateHistory();
+                        alert('所有記錄已清空');
+                    } else {
+                        errorMessage.classList.add('show');
+                        passwordInput.value = '';
+                        passwordInput.focus();
+                    }
+                });
+
+                cancelBtn.addEventListener('click', () => {
+                    passwordDialog.classList.remove('show');
+                    overlay.style.display = 'none';
+                    errorMessage.classList.remove('show');
+                });
+
+                // 按 Enter 鍵確認
+                passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        confirmBtn.click();
+                    }
+                });
+            }
+
+            function createOverlay() {
+                const overlay = document.createElement('div');
+                overlay.className = 'dialog-overlay';
+                overlay.style.display = 'none';
+                document.body.appendChild(overlay);
+                return overlay;
             }
         });
     </script>
