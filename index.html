@@ -12,7 +12,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f2dcab;
+            background-color: #ccd0cf;
             color: #333;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -698,15 +698,15 @@
         }
 
         .category-tab[data-category="正面"] {
-            border-color: #ff8a00;
+            border-color: #2c3e50;
         }
 
         .category-tab[data-category="負面"] {
-            border-color: #013e75;
+            border-color: #2c3e50;
         }
 
         .category-tab[data-category="其他"] {
-            border-color: #423f3d;
+            border-color: #2c3e50;
         }
 
         .category-tab::before {
@@ -731,15 +731,15 @@
         }
 
         .category-tab[data-category="正面"].active {
-            background: #ff8a00;
+            background: #2c3e50;
         }
 
         .category-tab[data-category="負面"].active {
-            background: #013e75;
+            background: #2c3e50;
         }
 
         .category-tab[data-category="其他"].active {
-            background: #423f3d;
+            background: #2c3e50;
         }
 
         .category-tab .category-icon {
@@ -1191,14 +1191,141 @@
                 justify-content: center;
             }
         }
+
+        .login-container {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .welcome-title {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .input-group label {
+            color: #2c3e50;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        #nickname {
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        #nickname:focus {
+            border-color: #2c3e50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+
+        .start-btn {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .start-btn:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+        }
+
+        .start-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 50px 20px;
+                padding: 30px;
+            }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            background: #2c3e50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-name {
+            color: #2c3e50;
+            font-weight: 600;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <!-- 登入介面 -->
+        <div id="login-page" class="page active">
+            <div class="login-container">
+                <h1 class="welcome-title">歡迎使用音樂情緒管理系統</h1>
+                <div class="login-form">
+                    <div class="input-group">
+                        <label for="nickname">請輸入您的暱稱</label>
+                        <input type="text" id="nickname" placeholder="輸入暱稱..." maxlength="20">
+                    </div>
+                    <button id="start-btn" class="start-btn">開始使用</button>
+                </div>
+            </div>
+        </div>
+
         <!-- 頁面導航 -->
-        <div class="page-nav">
-            <button class="nav-button active" data-page="page-upload">上傳資料</button>
+        <div class="page-nav" style="display: none;">
+            <button class="nav-button" data-page="page-upload">上傳資料</button>
             <button class="nav-button" data-page="page-mood">心情記錄</button>
             <button class="nav-button" data-page="page-music">音樂推薦</button>
         </div>
@@ -1573,7 +1700,7 @@
                                     ${items.map(scenario => `
                                         <div class="scenario-tag${selectedScenarios.has(scenario) ? ' selected' : ''}" 
                                              data-scenario="${scenario}">
-                                            ${scenario}
+                        ${scenario}
                                         </div>
                                     `).join('')}
                                 </div>
@@ -1633,7 +1760,7 @@
                                     <div class="song-ratings">
                                         <p><strong>歌曲評分：</strong></p>
                                         <div class="rating-list">
-                                            ${latestMood.songRatings.map(rating => `
+                                        ${latestMood.songRatings.map(rating => `
                                                 <div class="rating-item">
                                                     <span class="song-name">${rating.songName}</span>
                                                     <span class="rating-stars">
@@ -1641,7 +1768,7 @@
                                                         ${Array(5 - rating.rating).fill('☆').join('')}
                                                     </span>
                                                 </div>
-                                            `).join('')}
+                                        `).join('')}
                                         </div>
                                     </div>
                                 ` : ''}
@@ -1760,7 +1887,7 @@
                                 <div class="song-ratings">
                                     <p><strong>歌曲評分：</strong></p>
                                     <div class="rating-list">
-                                        ${lastMoodRecord.songRatings.map(rating => `
+                                    ${lastMoodRecord.songRatings.map(rating => `
                                             <div class="rating-item">
                                                 <span class="song-name">${rating.songName}</span>
                                                 <span class="rating-stars">
@@ -1768,7 +1895,7 @@
                                                     ${Array(5 - rating.rating).fill('☆').join('')}
                                                 </span>
                                             </div>
-                                        `).join('')}
+                                    `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
@@ -1778,7 +1905,7 @@
                                 <span class="btn-icon">✓</span>
                                 完成紀錄
                             </button>
-                        </div>
+                    </div>
                     </div>
                 `;
 
@@ -1788,8 +1915,8 @@
                         <div class="recommendations-header">
                             <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
                             <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
-                        </div>
-                        ${filteredSongs.map(song => `
+                           </div>
+                           ${filteredSongs.map(song => `
                             <div class="song-detail-card">
                                 <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
                                 <div class="song-info">
@@ -2028,11 +2155,13 @@
 
                 const note = noteInput.value;
                 const date = new Date().toLocaleString('zh-TW');
+                const nickname = localStorage.getItem('userNickname');
                 const moodEntry = {
                     mood: selectedMood,
-                    scenarios: Array.from(selectedScenarios),  // 這裡現在只會有一個情境或空
+                    scenarios: Array.from(selectedScenarios),
                     note,
                     date,
+                    nickname,
                     songRatings: []
                 };
 
@@ -2343,6 +2472,65 @@
                             }
                         }
                     });
+                }
+            }
+
+            // 登入相關變數
+            const loginPage = document.getElementById('login-page');
+            const nicknameInput = document.getElementById('nickname');
+            const startBtn = document.getElementById('start-btn');
+            const pageNav = document.querySelector('.page-nav');
+
+            // 檢查是否已登入
+            const savedNickname = localStorage.getItem('userNickname');
+            if (savedNickname) {
+                showMainContent(savedNickname);
+            }
+
+            // 監聽暱稱輸入
+            nicknameInput.addEventListener('input', () => {
+                startBtn.disabled = !nicknameInput.value.trim();
+            });
+
+            // 監聽開始按鈕
+            startBtn.addEventListener('click', () => {
+                const nickname = nicknameInput.value.trim();
+                if (nickname) {
+                    localStorage.setItem('userNickname', nickname);
+                    showMainContent(nickname);
+                }
+            });
+
+            // 顯示主要內容
+            function showMainContent(nickname) {
+                // 隱藏登入頁面
+                loginPage.style.display = 'none';
+
+                // 顯示導航欄
+                pageNav.style.display = 'flex';
+
+                // 添加用戶資訊
+                const userInfo = document.createElement('div');
+                userInfo.className = 'user-info';
+                userInfo.innerHTML = `
+                    <div class="user-avatar">${nickname.charAt(0)}</div>
+                    <span class="user-name">${nickname}</span>
+                `;
+                document.querySelector('.container').appendChild(userInfo);
+
+                // 激活上傳頁面
+                document.querySelector('[data-page="page-upload"]').click();
+            }
+
+            // 更新所有需要使用暱稱的地方
+            function updateNicknameDisplay() {
+                const nickname = localStorage.getItem('userNickname');
+                if (nickname) {
+                    // 在心情記錄中加入暱稱
+                    const moodEntry = {
+                        // ... existing mood entry properties ...
+                        nickname: nickname
+                    };
                 }
             }
         });
