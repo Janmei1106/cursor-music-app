@@ -1304,44 +1304,172 @@
             color: #2c3e50;
             font-weight: 600;
         }
+
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(204, 208, 207, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-container {
+            max-width: 500px;
+            width: 90%;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .welcome-title {
+            color: #2c3e50;
+            font-size: 1.8em;
+            margin-bottom: 30px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .input-group label {
+            color: #2c3e50;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        #nickname {
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        #nickname:focus {
+            border-color: #2c3e50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+
+        .login-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .start-btn {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .start-btn-anonymous {
+            background: #95a5a6;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+        }
+
+        .start-btn-anonymous:hover {
+            background: #7f8c8d;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            background: #2c3e50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-name {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                width: 85%;
+                padding: 30px;
+            }
+
+            .login-buttons {
+                flex-direction: column;
+            }
+
+            .start-btn {
+                max-width: none;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <!-- 登入介面 -->
-        <div id="login-page" class="page active">
-            <div class="login-container">
-                <h1 class="welcome-title">歡迎使用音樂情緒管理系統</h1>
-                <div class="login-form">
-                    <div class="input-group">
-                        <label for="nickname">請輸入您的暱稱</label>
-                        <input type="text" id="nickname" placeholder="輸入暱稱..." maxlength="20">
+        <!-- 移除原本的登入頁面，修改心情記錄頁面 -->
+        <div id="page-mood" class="page">
+            <!-- 登入介面 -->
+            <div id="login-overlay" class="login-overlay">
+                <div class="login-container">
+                    <h2 class="welcome-title">開始記錄心情</h2>
+                    <div class="login-form">
+                        <div class="input-group">
+                            <label for="nickname">請輸入您的暱稱（選填）</label>
+                            <input type="text" id="nickname" placeholder="輸入暱稱..." maxlength="20">
+                        </div>
+                        <div class="login-buttons">
+                            <button id="start-with-name" class="start-btn">以暱稱開始</button>
+                            <button id="start-anonymous" class="start-btn start-btn-anonymous">匿名使用</button>
+                        </div>
                     </div>
-                    <button id="start-btn" class="start-btn">開始使用</button>
                 </div>
             </div>
-        </div>
 
-        <!-- 頁面導航 -->
-        <div class="page-nav" style="display: none;">
-            <button class="nav-button" data-page="page-upload">上傳資料</button>
-            <button class="nav-button" data-page="page-mood">心情記錄</button>
-            <button class="nav-button" data-page="page-music">音樂推薦</button>
-        </div>
-
-        <!-- 第一頁：上傳 Excel -->
-        <div id="page-upload" class="page active">
-            <h1 class="section-title">音樂情緒管理系統</h1>
-            <div class="excel-upload">
-                <input type="file" id="excel-file" accept=".xlsx,.xls">
-                <label for="excel-file">上傳音樂資料庫 (Excel檔案)</label>
-                <p id="upload-status"></p>
-            </div>
-        </div>
-
-        <!-- 第二頁：記錄心情 -->
-        <div id="page-mood" class="page">
             <h1 class="section-title">記錄今日心情</h1>
             <div class="choices-container">
                 <div class="section-label">選擇心情：</div>
@@ -2155,7 +2283,9 @@
 
                 const note = noteInput.value;
                 const date = new Date().toLocaleString('zh-TW');
-                const nickname = localStorage.getItem('userNickname');
+                const userStatus = localStorage.getItem('userStatus');
+                const nickname = userStatus === 'named' ? localStorage.getItem('userNickname') : '訪客';
+
                 const moodEntry = {
                     mood: selectedMood,
                     scenarios: Array.from(selectedScenarios),
@@ -2476,50 +2606,66 @@
             }
 
             // 登入相關變數
-            const loginPage = document.getElementById('login-page');
+            const loginOverlay = document.getElementById('login-overlay');
             const nicknameInput = document.getElementById('nickname');
-            const startBtn = document.getElementById('start-btn');
-            const pageNav = document.querySelector('.page-nav');
+            const startWithNameBtn = document.getElementById('start-with-name');
+            const startAnonymousBtn = document.getElementById('start-anonymous');
 
-            // 檢查是否已登入
-            const savedNickname = localStorage.getItem('userNickname');
-            if (savedNickname) {
-                showMainContent(savedNickname);
-            }
-
-            // 監聽暱稱輸入
-            nicknameInput.addEventListener('input', () => {
-                startBtn.disabled = !nicknameInput.value.trim();
+            // 監聽頁面切換
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (button.dataset.page === 'page-mood' && !localStorage.getItem('userStatus')) {
+                        // 顯示登入介面
+                        loginOverlay.style.display = 'flex';
+                    }
+                    // ... rest of the existing navigation code ...
+                });
             });
 
-            // 監聽開始按鈕
-            startBtn.addEventListener('click', () => {
+            // 以暱稱開始
+            startWithNameBtn.addEventListener('click', () => {
                 const nickname = nicknameInput.value.trim();
                 if (nickname) {
                     localStorage.setItem('userNickname', nickname);
-                    showMainContent(nickname);
+                    localStorage.setItem('userStatus', 'named');
+                    showUserInfo(nickname);
+                    loginOverlay.style.display = 'none';
+                } else {
+                    alert('請輸入暱稱');
                 }
             });
 
-            // 顯示主要內容
-            function showMainContent(nickname) {
-                // 隱藏登入頁面
-                loginPage.style.display = 'none';
+            // 匿名使用
+            startAnonymousBtn.addEventListener('click', () => {
+                localStorage.setItem('userStatus', 'anonymous');
+                localStorage.removeItem('userNickname');
+                showUserInfo('訪客');
+                loginOverlay.style.display = 'none';
+            });
 
-                // 顯示導航欄
-                pageNav.style.display = 'flex';
+            // 顯示用戶資訊
+            function showUserInfo(name) {
+                let userInfo = document.querySelector('.user-info');
+                if (!userInfo) {
+                    userInfo = document.createElement('div');
+                    userInfo.className = 'user-info';
+                    document.querySelector('.container').appendChild(userInfo);
+                }
 
-                // 添加用戶資訊
-                const userInfo = document.createElement('div');
-                userInfo.className = 'user-info';
                 userInfo.innerHTML = `
-                    <div class="user-avatar">${nickname.charAt(0)}</div>
-                    <span class="user-name">${nickname}</span>
+                    <div class="user-avatar">${name.charAt(0)}</div>
+                    <span class="user-name">${name}</span>
                 `;
-                document.querySelector('.container').appendChild(userInfo);
+            }
 
-                // 激活上傳頁面
-                document.querySelector('[data-page="page-upload"]').click();
+            // 檢查用戶狀態
+            const userStatus = localStorage.getItem('userStatus');
+            const savedNickname = localStorage.getItem('userNickname');
+
+            if (userStatus === 'named' && savedNickname) {
+                showUserInfo(savedNickname);
+            } else if (userStatus === 'anonymous') {
+                showUserInfo('訪客');
             }
 
             // 更新所有需要使用暱稱的地方
