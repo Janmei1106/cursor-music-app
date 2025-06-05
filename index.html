@@ -1061,6 +1061,34 @@
                 display: none;
             }
         }
+
+        .song-ratings {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .rating-list {
+            margin-top: 10px;
+        }
+
+        .rating-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .song-name {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .rating-stars {
+            color: #FFD700;
+            letter-spacing: 2px;
+        }
     </style>
 </head>
 
@@ -1636,6 +1664,22 @@
                                 <span style="color: #666;">| ${lastMoodRecord.date}</span>
                             </p>
                             <p>${lastMoodRecord.note}</p>
+                            ${lastMoodRecord.songRatings && lastMoodRecord.songRatings.length > 0 ? `
+                                <div class="song-ratings">
+                                    <p><strong>歌曲評分：</strong></p>
+                                    <div class="rating-list">
+                                        ${lastMoodRecord.songRatings.map(rating => `
+                                            <div class="rating-item">
+                                                <span class="song-name">${rating.songName}</span>
+                                                <span class="rating-stars">
+                                                    ${Array(rating.rating).fill('★').join('')}
+                                                    ${Array(5 - rating.rating).fill('☆').join('')}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -2033,7 +2077,50 @@
                     }
 
                     localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
-                    updateHistory(); // 更新歷史記錄顯示
+
+                    // 更新本次心情記錄顯示
+                    updateCurrentMoodRecordDisplay(latestMood);
+
+                    // 更新歷史記錄顯示
+                    updateHistory();
+                }
+            }
+
+            // 更新本次心情記錄顯示
+            function updateCurrentMoodRecordDisplay(moodRecord) {
+                const currentMoodRecord = document.querySelector('.current-mood-record');
+                if (currentMoodRecord) {
+                    currentMoodRecord.innerHTML = `
+                        <div class="record-header">
+                            <h3>本次心情記錄</h3>
+                        </div>
+                        <div class="mood-entry">
+                            <p>
+                                <strong>${moodRecord.mood}</strong>
+                                ${moodRecord.scenarios && moodRecord.scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${moodRecord.scenarios.join(', ')}</span>`
+                            : ''}
+                                <span style="color: #666;">| ${moodRecord.date}</span>
+                            </p>
+                            <p>${moodRecord.note}</p>
+                            ${moodRecord.songRatings && moodRecord.songRatings.length > 0 ? `
+                                <div class="song-ratings">
+                                    <p><strong>歌曲評分：</strong></p>
+                                    <div class="rating-list">
+                                        ${moodRecord.songRatings.map(rating => `
+                                            <div class="rating-item">
+                                                <span class="song-name">${rating.songName}</span>
+                                                <span class="rating-stars">
+                                                    ${Array(rating.rating).fill('★').join('')}
+                                                    ${Array(5 - rating.rating).fill('☆').join('')}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
                 }
             }
 
