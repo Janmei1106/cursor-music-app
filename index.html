@@ -1043,6 +1043,31 @@
             color: #FFD700;
             letter-spacing: 2px;
         }
+
+        .finish-record-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+        }
+
+        .finish-record-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+        }
+
+        .finish-record-btn:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
     </style>
 </head>
 
@@ -1107,6 +1132,9 @@
                 </div>
             </div>
             <div id="music-recommendations"></div>
+            <div class="finish-record-container">
+                <button class="finish-record-btn">完成紀錄</button>
+            </div>
         </div>
     </div>
 
@@ -2085,6 +2113,29 @@
             // 初始化
             updateHistory();
             lastMoodRecord = getLastMoodRecord();
+
+            // 添加完成紀錄按鈕的事件監聽
+            const finishRecordBtn = document.querySelector('.finish-record-btn');
+            if (finishRecordBtn) {
+                finishRecordBtn.addEventListener('click', () => {
+                    // 切換到心情記錄頁面
+                    const moodPageButton = document.querySelector('[data-page="page-mood"]');
+                    if (moodPageButton) {
+                        moodPageButton.click();
+
+                        // 確保歷史記錄是最新的
+                        updateHistory();
+
+                        // 滾動到歷史記錄區域
+                        const historyContainer = document.getElementById('history-container');
+                        if (historyContainer) {
+                            setTimeout(() => {
+                                historyContainer.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>
