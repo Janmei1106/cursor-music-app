@@ -1510,6 +1510,50 @@
                 justify-content: center;
             }
         }
+
+        .login-hint {
+            color: #64748b;
+            font-size: 0.95em;
+            margin: -15px 0 20px;
+            text-align: center;
+        }
+
+        .welcome-title {
+            transition: all 0.3s ease;
+        }
+
+        #nickname {
+            transition: all 0.3s ease;
+        }
+
+        #nickname:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
+        }
+
+        .input-group label {
+            transition: color 0.3s ease;
+        }
+
+        #nickname:focus+label {
+            color: #2c3e50;
+        }
+
+        .login-container {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -2814,6 +2858,10 @@
                 if (overlay) overlay.remove();
                 if (dialog) dialog.remove();
 
+                // 清除歷史通知
+                const notice = document.querySelector('.history-notice');
+                if (notice) notice.remove();
+
                 // 切換到登入頁面
                 Object.values(pages).forEach(page => page.classList.remove('active'));
                 document.getElementById('login-page').classList.add('active');
@@ -2821,6 +2869,37 @@
                 // 移除用戶資訊顯示
                 const userInfo = document.querySelector('.user-info');
                 if (userInfo) userInfo.remove();
+
+                // 清空暱稱輸入框
+                const nicknameInput = document.getElementById('nickname');
+                if (nicknameInput) {
+                    nicknameInput.value = '';
+                }
+
+                // 重置登入頁面狀態
+                const startBtn = document.getElementById('start-btn');
+                if (startBtn) {
+                    startBtn.classList.remove('active');
+                }
+
+                // 添加歡迎回來的提示
+                showWelcomeBackMessage();
+            }
+
+            function showWelcomeBackMessage() {
+                const welcomeTitle = document.querySelector('.welcome-title');
+                if (welcomeTitle) {
+                    welcomeTitle.textContent = '歡迎回來';
+
+                    // 添加提示文字
+                    let hintText = document.querySelector('.login-hint');
+                    if (!hintText) {
+                        hintText = document.createElement('p');
+                        hintText.className = 'login-hint';
+                        welcomeTitle.insertAdjacentElement('afterend', hintText);
+                    }
+                    hintText.textContent = '請輸入新的暱稱或選擇匿名使用';
+                }
             }
 
             // 修改完成紀錄按鈕的點擊事件
