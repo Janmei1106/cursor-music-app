@@ -903,15 +903,23 @@
         .stars {
             display: inline-flex;
             gap: 4px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
 
         .star {
             font-size: 1.5em;
             cursor: pointer;
-            color: #e2e8f0;
+            color: #bdc3c7;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             user-select: none;
+            display: inline-block;
+            width: 1.2em;
+            text-align: center;
         }
 
         .star::before {
@@ -919,16 +927,19 @@
             position: absolute;
             top: 0;
             left: 0;
+            width: 100%;
             color: #FFD700;
             opacity: 0;
             transform: scale(1.1);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
         }
 
         .star:hover,
         .star.active {
             color: #FFD700;
             transform: scale(1.1);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .star.active::before {
@@ -937,7 +948,15 @@
         }
 
         .star:hover~.star {
-            color: #e2e8f0;
+            color: #bdc3c7;
+        }
+
+        /* 未選中星星的樣式 */
+        .star:not(.active):not(:hover) {
+            background: linear-gradient(45deg, transparent 45%, #95a5a6 50%, transparent 55%);
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .rating-feedback {
