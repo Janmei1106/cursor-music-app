@@ -2982,64 +2982,100 @@
                     filteredHistory = moodHistory.filter(entry => entry.nickname === filterNickname);
                 }
 
-                // 更新歷史記錄標題區域
-                const historyHeaderHtml = `
-                    <div class="history-header">
-                        <h2 class="history-title">歷史記錄</h2>
-                        <div class="user-search">
-                            <input type="text" class="search-input" placeholder="搜尋使用者暱稱...">
-                            <button class="search-btn">查詢</button>
-                            <div class="search-results"></div>
+                const historyContainer = document.getElementById('historyContainer');
+
+                // 添加歌曲卡片容器（如果不存在）
+                if (!document.querySelector('.history-song-card')) {
+                    const songCard = document.createElement('div');
+                    songCard.className = 'history-song-card';
+                    songCard.innerHTML = `
+                        <div class="history-song-header">
+                            <div class="history-song-title">歌曲資訊</div>
+                            <button class="close-history-card">&times;</button>
                         </div>
-                    </div>
-                    ${filterNickname ? `
-                        <div class="filtered-records">
-                            <div class="filtered-header">
-                                <span class="filtered-title">顯示 ${filterNickname} 的記錄</span>
-                                <button class="clear-filter">清除篩選</button>
-                            </div>
-                        </div>
-                    ` : ''}
-                `;
+                        <div class="history-song-info"></div>
+                    `;
+                    document.body.appendChild(songCard);
+                }
+
+                // 添加遮罩層（如果不存在）
+                if (!document.querySelector('.dialog-overlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'dialog-overlay';
+                    document.body.appendChild(overlay);
+                }
 
                 // 更新歷史記錄內容
-                historyContainer.innerHTML = historyHeaderHtml + filteredHistory.map(entry => `
-                    <div class="mood-entry">
-                        <div class="entry-header">
-                            ${entry.nickname && entry.nickname !== '匿名用戶' ?
-                        `<div class="record-user">
-                                    <div class="user-avatar-small">${entry.nickname.charAt(0)}</div>
-                                    <span class="user-name-small">${entry.nickname}</span>
-                                </div>` :
-                        ''
-                    }
-                            <div class="entry-time">${entry.date}</div>
-                        </div>
-                        <p>
-                            <strong>${entry.mood}</strong>
-                            ${entry.scenarios && entry.scenarios.length > 0
-                        ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
-                        : ''}
-                        </p>
-                        <p>${entry.note}</p>
-                        ${entry.songRatings && entry.songRatings.length > 0 ? `
-                            <div class="song-ratings">
-                                <p><strong>歌曲評分：</strong></p>
-                                <div class="rating-list">
-                                ${entry.songRatings.map(rating => `
-                                        <div class="rating-item">
-                                            <span class="song-name">${rating.songName}</span>
-                                            <span class="rating-stars">
-                                                ${Array(rating.rating).fill('★').join('')}
-                                                ${Array(5 - rating.rating).fill('☆').join('')}
-                                            </span>
-                                        </div>
-                                `).join('')}
-                                </div>
+                historyContainer.innerHTML = filteredHistory.map(entry => `
+                    <div class="history-item">
+                        <div class="history-content">
+                            <div class="history-header">
+                                <span class="nickname">${entry.nickname || '匿名'}</span>
+                                <span class="history-date-tag">${new Date(entry.timestamp).toLocaleString()}</span>
                             </div>
-                        ` : ''}
+                            <div class="history-details">
+                                <span class="history-song-link" data-song='${JSON.stringify(entry)}'>${entry.songName}</span>
+                                <span class="history-emotion-tag">${entry.emotion}</span>
+                            </div>
+                        </div>
                     </div>
                 `).join('');
+
+                // 立即綁定歌曲點擊事件
+                const songLinks = document.querySelectorAll('.history-song-link');
+                const songCard = document.querySelector('.history-song-card');
+                const closeCard = document.querySelector('.close-history-card');
+                const overlay = document.querySelector('.dialog-overlay');
+
+                // 為每個歌曲連結添加點擊事件
+                songLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        const songData = JSON.parse(link.dataset.song);
+                        const songInfo = songCard.querySelector('.history-song-info');
+
+                        songInfo.innerHTML = `
+                            <div class="history-info-item">
+                                <div class="history-info-label">歌曲名稱</div>
+                                <div class="history-info-value">${songData.songName}</div>
+                            </div>
+                            <div class="history-info-item">
+                                <div class="history-info-label">使用者</div>
+                                <div class="history-info-value">${songData.nickname || '匿名'}</div>
+                            </div>
+                            <div class="history-info-item">
+                                <div class="history-info-label">情緒標籤</div>
+                                <div class="history-info-value">
+                                    <span class="history-emotion-tag">${songData.emotion}</span>
+                                </div>
+                            </div>
+                            <div class="history-info-item">
+                                <div class="history-info-label">記錄時間</div>
+                                <div class="history-info-value">${new Date(songData.timestamp).toLocaleString()}</div>
+                            </div>
+                        `;
+
+                        overlay.style.display = 'block';
+                        songCard.classList.add('show');
+                    });
+                });
+
+                // 綁定關閉按鈕事件
+                if (closeCard) {
+                    closeCard.addEventListener('click', () => {
+                        songCard.classList.remove('show');
+                        overlay.style.display = 'none';
+                    });
+                }
+
+                // 綁定遮罩層點擊事件
+                if (overlay) {
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            songCard.classList.remove('show');
+                            overlay.style.display = 'none';
+                        }
+                    });
+                }
 
                 // 添加清空記錄按鈕
                 historyContainer.innerHTML += `
@@ -3049,22 +3085,10 @@
                             清空所有記錄
                         </button>
                     </div>
-                    <div class="password-dialog">
-                        <div class="password-title">請輸入管理員密碼</div>
-                        <input type="password" class="password-input" placeholder="輸入密碼" maxlength="6">
-                        <div class="error-message">密碼錯誤，請重試</div>
-                        <div class="password-buttons">
-                            <button class="password-btn confirm-password">確認</button>
-                            <button class="password-btn cancel-password">取消</button>
-                        </div>
-                    </div>
                 `;
 
                 // 綁定清空記錄按鈕事件
                 bindClearHistoryEvents();
-
-                // 綁定搜尋相關事件
-                bindSearchEvents();
             }
 
             function bindSearchEvents() {
@@ -3808,56 +3832,6 @@
                 });
 
                 // 點擊遮罩層關閉卡片
-                overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) {
-                        songCard.classList.remove('show');
-                        overlay.style.display = 'none';
-                    }
-                });
-            }
-
-            function bindHistorySongEvents() {
-                const songLinks = document.querySelectorAll('.history-song-link');
-                const songCard = document.querySelector('.history-song-card');
-                const closeCard = document.querySelector('.close-history-card');
-                const overlay = document.querySelector('.dialog-overlay');
-
-                songLinks.forEach(link => {
-                    link.addEventListener('click', () => {
-                        const songData = JSON.parse(link.dataset.song);
-                        const songInfo = songCard.querySelector('.history-song-info');
-
-                        songInfo.innerHTML = `
-                            <div class="history-info-item">
-                                <div class="history-info-label">歌曲名稱</div>
-                                <div class="history-info-value">${songData.songName}</div>
-                            </div>
-                            <div class="history-info-item">
-                                <div class="history-info-label">使用者</div>
-                                <div class="history-info-value">${songData.nickname || '匿名'}</div>
-                            </div>
-                            <div class="history-info-item">
-                                <div class="history-info-label">情緒標籤</div>
-                                <div class="history-info-value">
-                                    <span class="history-emotion-tag">${songData.emotion}</span>
-                                </div>
-                            </div>
-                            <div class="history-info-item">
-                                <div class="history-info-label">記錄時間</div>
-                                <div class="history-info-value">${new Date(songData.timestamp).toLocaleString()}</div>
-                            </div>
-                        `;
-
-                        overlay.style.display = 'block';
-                        songCard.classList.add('show');
-                    });
-                });
-
-                closeCard.addEventListener('click', () => {
-                    songCard.classList.remove('show');
-                    overlay.style.display = 'none';
-                });
-
                 overlay.addEventListener('click', (e) => {
                     if (e.target === overlay) {
                         songCard.classList.remove('show');
