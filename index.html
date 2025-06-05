@@ -1472,6 +1472,44 @@
                 width: 100%;
             }
         }
+
+        .history-notice {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 998;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .history-notice.show {
+            transform: translateX(0);
+        }
+
+        .notice-timer {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .history-notice {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                text-align: center;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 
@@ -2801,13 +2839,113 @@
                         if (historyContainer) {
                             setTimeout(() => {
                                 historyContainer.scrollIntoView({ behavior: 'smooth' });
-                                // 顯示確認對話框
-                                showConfirmationDialog();
+                                // 顯示歷史記錄查看通知
+                                showHistoryNotice();
                             }, 100);
                         }
                     }
                 }
             });
+
+            function showHistoryNotice() {
+                // 創建通知元素
+                const notice = document.createElement('div');
+                notice.className = 'history-notice';
+                notice.innerHTML = `
+                    <span>查看歷史紀錄中</span>
+                    <span class="notice-timer">10</span>
+                `;
+                document.body.appendChild(notice);
+
+                // 延遲一下再顯示，讓過渡效果生效
+                setTimeout(() => {
+                    notice.classList.add('show');
+                }, 100);
+
+                let timeLeft = 10;
+                const timer = notice.querySelector('.notice-timer');
+
+                // 設置計時器
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    timer.textContent = timeLeft;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        notice.classList.remove('show');
+                        setTimeout(() => {
+                            notice.remove();
+                            showConfirmationDialog();
+                        }, 300);
+                    }
+                }, 1000);
+            }
+
+            function showConfirmationDialog() {
+                // 創建對話框元素
+                const overlay = document.createElement('div');
+                overlay.className = 'dialog-overlay';
+                overlay.style.opacity = '0';
+
+                const dialog = document.createElement('div');
+                dialog.className = 'confirmation-dialog';
+                dialog.style.opacity = '0';
+                dialog.style.transform = 'translate(-50%, -60%)';
+
+                let timeLeft = 10;
+
+                dialog.innerHTML = `
+                    <div class="dialog-title">完成紀錄</div>
+                    <div class="dialog-message">是否要繼續使用？</div>
+                    <div class="timer">${timeLeft}</div>
+                    <div class="dialog-buttons">
+                        <button class="dialog-btn continue-btn">繼續使用</button>
+                        <button class="dialog-btn exit-btn">結束使用</button>
+                    </div>
+                `;
+
+                document.body.appendChild(overlay);
+                document.body.appendChild(dialog);
+
+                // 使用 requestAnimationFrame 來確保過渡效果
+                requestAnimationFrame(() => {
+                    overlay.style.opacity = '1';
+                    dialog.style.opacity = '1';
+                    dialog.style.transform = 'translate(-50%, -50%)';
+                });
+
+                // 設置計時器
+                const timer = dialog.querySelector('.timer');
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    timer.textContent = timeLeft;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        exitApplication();
+                    }
+                }, 1000);
+
+                // 綁定按鈕事件
+                const continueBtn = dialog.querySelector('.continue-btn');
+                const exitBtn = dialog.querySelector('.exit-btn');
+
+                continueBtn.addEventListener('click', () => {
+                    clearInterval(countdown);
+                    overlay.style.opacity = '0';
+                    dialog.style.opacity = '0';
+                    dialog.style.transform = 'translate(-50%, -60%)';
+                    setTimeout(() => {
+                        overlay.remove();
+                        dialog.remove();
+                    }, 300);
+                });
+
+                exitBtn.addEventListener('click', () => {
+                    clearInterval(countdown);
+                    exitApplication();
+                });
+            }
         });
     </script>
 </body>
