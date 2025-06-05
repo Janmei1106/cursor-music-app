@@ -496,528 +496,80 @@
         }
 
         /* 情境選擇區域樣式 */
-        .scenario-container {
-            position: relative;
-            padding: 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .scenario-actions {
+        .scenario-grid {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .selected-count {
-            font-size: 0.9em;
-            color: #4a5568;
-            font-weight: 600;
-        }
-
-        .scenario-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .scenario-action-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: 600;
-        }
-
-        .select-all-btn {
-            background-color: #4a5568;
-            color: white;
-        }
-
-        .select-all-btn:hover {
-            background-color: #2d3748;
-            transform: translateY(-2px);
-        }
-
-        .clear-btn {
-            background-color: #e2e8f0;
-            color: #4a5568;
-        }
-
-        .clear-btn:hover {
-            background-color: #cbd5e0;
-            transform: translateY(-2px);
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
         }
 
         .scenario-tag {
-            position: relative;
-            padding-left: 30px;
-        }
-
-        .scenario-tag::before {
-            content: '';
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
-            border: 2px solid #cbd5e0;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .scenario-tag.selected::before {
-            background-color: #4a5568;
-            border-color: #4a5568;
-        }
-
-        .scenario-tag.selected::after {
-            content: '✓';
-            position: absolute;
-            left: 13px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: white;
-            font-size: 0.8em;
-        }
-
-        /* 情緒記錄區塊 */
-        .mood-record-section {
-            background-color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .selected-mood-display {
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #f8f8f8;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .selected-mood-emoji {
-            font-size: 2em;
-        }
-
-        .selected-mood-text {
-            font-size: 1.1em;
-        }
-
-        .selected-scenario {
-            color: #666;
-            font-style: italic;
-        }
-
-        .recommendations-header {
-            margin-bottom: 20px;
-        }
-
-        .mood-match-info {
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-
-        .song-ratings {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-
-        /* 情緒分類按鈕樣式 */
-        .mood-category-section {
-            margin: 30px auto;
-            max-width: 1000px;
-        }
-
-        .section-title {
-            font-size: 1.8em;
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 700;
-        }
-
-        .category-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-            padding: 0 20px;
-        }
-
-        .category-tab {
-            flex: 1;
-            max-width: 200px;
-            background: #fff;
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-size: 1.1em;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 50px;
+            padding: 7px 18px;
+            font-size: 0.92em;
+            color: #4a5568;
             cursor: pointer;
-            transition: all 0.3s ease;
-            color: #333;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            border: 2px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            user-select: none;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
             position: relative;
             overflow: hidden;
             font-weight: 600;
         }
 
-        .category-tab[data-category="正面"] {
-            border-color: #4CAF50;
-        }
-
-        .category-tab[data-category="負面"] {
-            border-color: #f44336;
-        }
-
-        .category-tab[data-category="其他"] {
-            border-color: #2196F3;
-        }
-
-        .category-tab::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: currentColor;
-            opacity: 0.1;
-            transition: opacity 0.3s ease;
-        }
-
-        .category-tab:hover::before {
-            opacity: 0.15;
-        }
-
-        .category-tab.active {
-            color: white;
+        .scenario-tag:hover {
+            border-color: #4a5568;
+            color: #2d3748;
             transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
         }
 
-        .category-tab[data-category="正面"].active {
-            background: #4CAF50;
-        }
-
-        .category-tab[data-category="負面"].active {
-            background: #f44336;
-        }
-
-        .category-tab[data-category="其他"].active {
-            background: #2196F3;
-        }
-
-        .category-tab .category-icon {
-            font-size: 1.5em;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-
-        .subcategory-container {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .reset-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #f5f5f5;
-            border: none;
-            border-radius: 50px;
-            padding: 8px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9em;
-            color: #666;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: 600;
-        }
-
-        .reset-button::before {
-            content: '↺';
-            font-size: 1.2em;
-        }
-
-        .reset-button:hover {
-            background: #000;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        @media (max-width: 768px) {
-            .category-tabs {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .category-tab {
-                max-width: none;
-                margin: 0;
-                padding: 12px 20px;
-            }
-
-            .reset-button {
-                position: static;
-                width: 100%;
-                margin-bottom: 15px;
-                justify-content: center;
-            }
-        }
-
-        /* 選擇心情標題樣式 */
-        .section-label {
-            font-size: 1.1em;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f0f0;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .choices-container {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            margin: 20px 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .choices-container:hover {
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-        }
-
-        /* 評分系統樣式 */
-        .rating-container {
-            margin: 15px 0;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            position: relative;
-        }
-
-        .rating-title {
-            font-size: 0.95em;
-            color: #4a5568;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .rating {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .stars {
-            display: inline-flex;
-            gap: 4px;
-            padding: 5px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .star {
-            font-size: 1.5em;
-            cursor: pointer;
-            color: #2c3e50;
-            text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            user-select: none;
-            display: inline-block;
-            width: 1.2em;
-            text-align: center;
-            -webkit-text-stroke: 1px #2c3e50;
-        }
-
-        .star::before {
-            content: '★';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            color: #FFD700;
-            opacity: 0;
-            transform: scale(1.1);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
-            -webkit-text-stroke: 0;
-        }
-
-        .star:hover,
-        .star.active {
-            color: #FFD700;
-            transform: scale(1.1);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            -webkit-text-stroke: 0;
-        }
-
-        .star.active::before {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .star:hover~.star {
-            color: #2c3e50;
-        }
-
-        /* 未選中星星的樣式 */
-        .star:not(.active):not(:hover) {
-            background: linear-gradient(45deg, transparent 45%, #2c3e50 50%, transparent 55%);
-            -webkit-background-clip: text;
-            color: transparent;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        /* 添加星星外框效果 */
-        .star:not(.active):not(:hover)::after {
-            content: '☆';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            color: #2c3e50;
-            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-        }
-
-        .rating-feedback {
-            font-size: 0.9em;
-            color: #4a5568;
-            margin-left: 10px;
-            font-weight: 600;
-            opacity: 0;
-            transform: translateX(-10px);
-            transition: all 0.3s ease;
-        }
-
-        .rating-feedback.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .rating-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-            font-size: 0.85em;
-            color: #718096;
-        }
-
-        .rating-emoji {
-            font-size: 1.2em;
-        }
-
-        .rating-messages {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
+        .scenario-tag.selected {
             background: #2d3748;
             color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            opacity: 0;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 10;
-        }
-
-        .rating-messages.show {
-            opacity: 1;
-            top: -40px;
-        }
-
-        /* 動畫效果 */
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.2);
-            }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .star.active.pulse {
-            animation: pulse 0.3s ease-in-out;
-        }
-
-        /* 響應式設計 */
-        @media (max-width: 768px) {
-            .rating-container {
-                padding: 10px;
-            }
-
-            .star {
-                font-size: 1.3em;
-            }
-
-            .rating-feedback {
-                font-size: 0.85em;
-            }
-
-            .rating-messages {
-                display: none;
-            }
-        }
-
-        .song-ratings {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .rating-list {
-            margin-top: 10px;
-        }
-
-        .rating-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 0;
-            font-size: 0.9em;
-        }
-
-        .song-name {
-            color: #2c3e50;
+            border-color: #2d3748;
             font-weight: 600;
+            box-shadow: 0 2px 4px rgba(45, 55, 72, 0.2);
+        }
+
+        .scenario-tag.selected:hover {
+            background: #1a202c;
+            border-color: #1a202c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(45, 55, 72, 0.25);
+        }
+
+        /* 選中計數器樣式 */
+        .selected-count {
+            margin-top: 15px;
+            padding: 8px 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .selected-count span {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .selected-count-icon {
+            color: #4a5568;
+            font-size: 1.1em;
+        }
+
+        /* 情緒記錄區塊 */
+        .mood-record-section {
+            background-color: white;
         }
 
         .rating-stars {
@@ -1419,29 +971,19 @@
 
                 scenarioGrid.innerHTML = `
                     <div class="scenario-container">
-                        <div class="scenario-actions">
-                            <div class="selected-count">已選擇：<span>0</span> 個情境</div>
-                            <div class="scenario-buttons">
-                                <button class="scenario-action-btn select-all-btn">
-                                    <span>✓</span> 全選
-                                </button>
-                                <button class="scenario-action-btn clear-btn">
-                                    <span>×</span> 清除
-                                </button>
-                            </div>
-                        </div>
                         ${Object.entries(scenarioCategories).map(([category, items]) =>
                     items.length ? `
-                            <div class="category-row">
-                                <span class="scenario-category">${category}:</span>
-                                ${items.map(scenario => `
-                                    <div class="scenario-tag" data-scenario="${scenario}">
-                                        ${scenario}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''
+                                <div class="category-row">
+                                    <span class="scenario-category">${category}:</span>
+                                    ${items.map(scenario => `
+                                        <div class="scenario-tag" data-scenario="${scenario}">
+                        ${scenario}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''
                 ).join('')}
+                        <div class="selected-count">已選擇：<span>0</span></div>
                     </div>
                 `;
 
@@ -1458,50 +1000,12 @@
                         }
 
                         // 更新選中計數
-                        updateScenarioCount();
+                        const countDisplay = document.querySelector('.selected-count span');
+                        countDisplay.textContent = selectedScenarios.size;
+
                         updateSelectedMoodDisplay();
                     });
                 });
-
-                // 綁定全選按鈕事件
-                const selectAllBtn = document.querySelector('.select-all-btn');
-                selectAllBtn.addEventListener('click', () => {
-                    const allTags = document.querySelectorAll('.scenario-tag');
-                    const allSelected = Array.from(allTags).every(tag => tag.classList.contains('selected'));
-
-                    allTags.forEach(tag => {
-                        const scenario = tag.dataset.scenario;
-                        if (allSelected) {
-                            tag.classList.remove('selected');
-                            selectedScenarios.delete(scenario);
-                        } else {
-                            tag.classList.add('selected');
-                            selectedScenarios.add(scenario);
-                        }
-                    });
-
-                    updateScenarioCount();
-                    updateSelectedMoodDisplay();
-                });
-
-                // 綁定清除按鈕事件
-                const clearBtn = document.querySelector('.clear-btn');
-                clearBtn.addEventListener('click', () => {
-                    document.querySelectorAll('.scenario-tag').forEach(tag => {
-                        tag.classList.remove('selected');
-                    });
-                    selectedScenarios.clear();
-                    updateScenarioCount();
-                    updateSelectedMoodDisplay();
-                });
-            }
-
-            // 更新情境選擇計數
-            function updateScenarioCount() {
-                const countDisplay = document.querySelector('.selected-count span');
-                if (countDisplay) {
-                    countDisplay.textContent = selectedScenarios.size;
-                }
             }
 
             // 處理語言按鈕點擊
@@ -1651,7 +1155,7 @@
                                 <div class="song-ratings">
                                     <p><strong>歌曲評分：</strong></p>
                                     <div class="rating-list">
-                                        ${lastMoodRecord.songRatings.map(rating => `
+                                    ${lastMoodRecord.songRatings.map(rating => `
                                             <div class="rating-item">
                                                 <span class="song-name">${rating.songName}</span>
                                                 <span class="rating-stars">
@@ -1659,7 +1163,7 @@
                                                     ${Array(5 - rating.rating).fill('☆').join('')}
                                                 </span>
                                             </div>
-                                        `).join('')}
+                                    `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
@@ -1673,8 +1177,8 @@
                         <div class="recommendations-header">
                             <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
                             <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
-                        </div>
-                        ${filteredSongs.map(song => `
+                           </div>
+                           ${filteredSongs.map(song => `
                             <div class="song-detail-card">
                                 <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
                                 <div class="song-info">
@@ -2098,7 +1602,7 @@
                                                     ${Array(5 - rating.rating).fill('☆').join('')}
                                                 </span>
                                             </div>
-                                        `).join('')}
+                                    `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
