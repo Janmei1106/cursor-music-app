@@ -2079,6 +2079,94 @@
             z-index: 999;
             display: none;
         }
+
+        .rating-song-name {
+            color: #3498db;
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            margin-top: 10px;
+            display: block;
+            font-size: 1.1em;
+        }
+
+        .rating-song-name:hover {
+            color: #2980b9;
+        }
+
+        .rating-song-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .rating-song-card.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .rating-song-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rating-song-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .close-rating-card {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #7f8c8d;
+            padding: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .close-rating-card:hover {
+            color: #34495e;
+        }
+
+        .rating-song-info {
+            margin-bottom: 15px;
+        }
+
+        .rating-info-item {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .rating-info-label {
+            font-weight: 600;
+            color: #34495e;
+            width: 100px;
+        }
+
+        .rating-info-value {
+            color: #2c3e50;
+            flex: 1;
+        }
     </style>
 </head>
 
@@ -3845,6 +3933,94 @@
                             <div class="history-info-item">
                                 <div class="history-info-label">記錄時間</div>
                                 <div class="history-info-value">${new Date(songData.timestamp).toLocaleString()}</div>
+                            </div>
+                        `;
+
+                        overlay.style.display = 'block';
+                        songCard.classList.add('show');
+                    });
+                });
+
+                closeCard.addEventListener('click', () => {
+                    songCard.classList.remove('show');
+                    overlay.style.display = 'none';
+                });
+
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        songCard.classList.remove('show');
+                        overlay.style.display = 'none';
+                    }
+                });
+            }
+
+            function displayRatingResult(songName, rating) {
+                const resultContainer = document.getElementById('rating-result');
+                resultContainer.innerHTML = `
+                    <div class="rating-display">
+                        <div class="stars-display">
+                            ${generateStarsHTML(rating)}
+                        </div>
+                        <span class="rating-song-name" data-song="${songName}">${songName}</span>
+                    </div>
+                `;
+
+                // 添加歌曲卡片容器（如果不存在）
+                if (!document.querySelector('.rating-song-card')) {
+                    const songCard = document.createElement('div');
+                    songCard.className = 'rating-song-card';
+                    songCard.innerHTML = `
+                        <div class="rating-song-header">
+                            <div class="rating-song-title">歌曲資訊</div>
+                            <button class="close-rating-card">&times;</button>
+                        </div>
+                        <div class="rating-song-info"></div>
+                    `;
+                    document.body.appendChild(songCard);
+                }
+
+                // 綁定歌曲點擊事件
+                bindRatingSongEvents();
+            }
+
+            function bindRatingSongEvents() {
+                const songLinks = document.querySelectorAll('.rating-song-name');
+                const songCard = document.querySelector('.rating-song-card');
+                const closeCard = document.querySelector('.close-rating-card');
+                const overlay = document.querySelector('.dialog-overlay') || createOverlay();
+
+                songLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        const songName = link.dataset.song;
+                        const songInfo = songCard.querySelector('.rating-song-info');
+
+                        // 從 localStorage 中獲取歌曲資訊
+                        const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                        const songData = moodHistory.find(entry => entry.songName === songName) || {
+                            songName: songName,
+                            nickname: '未知',
+                            emotion: '未記錄',
+                            timestamp: new Date().getTime()
+                        };
+
+                        songInfo.innerHTML = `
+                            <div class="rating-info-item">
+                                <div class="rating-info-label">歌曲名稱</div>
+                                <div class="rating-info-value">${songData.songName}</div>
+                            </div>
+                            <div class="rating-info-item">
+                                <div class="rating-info-label">使用者</div>
+                                <div class="rating-info-value">${songData.nickname || '匿名'}</div>
+                            </div>
+                            <div class="rating-info-item">
+                                <div class="rating-info-label">情緒標籤</div>
+                                <div class="rating-info-value">
+                                    <span class="history-emotion-tag">${songData.emotion}</span>
+                                </div>
+                            </div>
+                            <div class="rating-info-item">
+                                <div class="rating-info-label">記錄時間</div>
+                                <div class="rating-info-value">${new Date(songData.timestamp).toLocaleString()}</div>
                             </div>
                         `;
 
