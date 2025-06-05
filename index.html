@@ -1377,6 +1377,101 @@
             color: #666;
             font-size: 0.9em;
         }
+
+        .confirmation-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            backdrop-filter: blur(3px);
+        }
+
+        .dialog-title {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .dialog-message {
+            margin-bottom: 25px;
+            color: #4a5568;
+        }
+
+        .timer {
+            font-size: 2em;
+            color: #2c3e50;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .dialog-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .continue-btn {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .exit-btn {
+            background: #e2e8f0;
+            color: #2c3e50;
+        }
+
+        .continue-btn:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+        }
+
+        .exit-btn:hover {
+            background: #cbd5e1;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .confirmation-dialog {
+                width: 90%;
+                max-width: 400px;
+            }
+
+            .dialog-buttons {
+                flex-direction: column;
+            }
+
+            .dialog-btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -2297,7 +2392,7 @@
                             <div class="song-ratings">
                                 <p><strong>歌曲評分：</strong></p>
                                 <div class="rating-list">
-                                    ${entry.songRatings.map(rating => `
+                                ${entry.songRatings.map(rating => `
                                         <div class="rating-item">
                                             <span class="song-name">${rating.songName}</span>
                                             <span class="rating-stars">
@@ -2305,7 +2400,7 @@
                                                 ${Array(5 - rating.rating).fill('☆').join('')}
                                             </span>
                                         </div>
-                                    `).join('')}
+                                `).join('')}
                                 </div>
                             </div>
                         ` : ''}
@@ -2498,7 +2593,7 @@
                                                     ${Array(5 - rating.rating).fill('☆').join('')}
                                                 </span>
                                             </div>
-                                        `).join('')}
+                                    `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
@@ -2615,6 +2710,104 @@
                 `;
                 document.querySelector('.container').appendChild(userInfo);
             }
+
+            function showConfirmationDialog() {
+                // 創建對話框元素
+                const overlay = document.createElement('div');
+                overlay.className = 'dialog-overlay';
+
+                const dialog = document.createElement('div');
+                dialog.className = 'confirmation-dialog';
+
+                let timeLeft = 10;
+
+                dialog.innerHTML = `
+                    <div class="dialog-title">完成紀錄</div>
+                    <div class="dialog-message">是否要繼續使用？</div>
+                    <div class="timer">${timeLeft}</div>
+                    <div class="dialog-buttons">
+                        <button class="dialog-btn continue-btn">繼續使用</button>
+                        <button class="dialog-btn exit-btn">結束使用</button>
+                    </div>
+                `;
+
+                document.body.appendChild(overlay);
+                document.body.appendChild(dialog);
+
+                // 設置計時器
+                const timer = dialog.querySelector('.timer');
+                const countdown = setInterval(() => {
+                    timeLeft--;
+                    timer.textContent = timeLeft;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(countdown);
+                        exitApplication();
+                    }
+                }, 1000);
+
+                // 綁定按鈕事件
+                const continueBtn = dialog.querySelector('.continue-btn');
+                const exitBtn = dialog.querySelector('.exit-btn');
+
+                continueBtn.addEventListener('click', () => {
+                    clearInterval(countdown);
+                    overlay.remove();
+                    dialog.remove();
+                });
+
+                exitBtn.addEventListener('click', () => {
+                    clearInterval(countdown);
+                    exitApplication();
+                });
+            }
+
+            function exitApplication() {
+                // 清除當前頁面狀態
+                selectedMood = '';
+                selectedScenarios.clear();
+                noteInput.value = '';
+                document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
+                document.querySelectorAll('.scenario-tag').forEach(tag => tag.classList.remove('selected'));
+
+                // 移除所有對話框
+                const overlay = document.querySelector('.dialog-overlay');
+                const dialog = document.querySelector('.confirmation-dialog');
+                if (overlay) overlay.remove();
+                if (dialog) dialog.remove();
+
+                // 切換到登入頁面
+                Object.values(pages).forEach(page => page.classList.remove('active'));
+                document.getElementById('login-page').classList.add('active');
+
+                // 移除用戶資訊顯示
+                const userInfo = document.querySelector('.user-info');
+                if (userInfo) userInfo.remove();
+            }
+
+            // 修改完成紀錄按鈕的點擊事件
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('finish-record-btn')) {
+                    // 切換到心情記錄頁面
+                    const moodPageButton = document.querySelector('[data-page="page-mood"]');
+                    if (moodPageButton) {
+                        moodPageButton.click();
+
+                        // 確保歷史記錄是最新的
+                        updateHistory();
+
+                        // 滾動到歷史記錄區域
+                        const historyContainer = document.getElementById('history-container');
+                        if (historyContainer) {
+                            setTimeout(() => {
+                                historyContainer.scrollIntoView({ behavior: 'smooth' });
+                                // 顯示確認對話框
+                                showConfirmationDialog();
+                            }, 100);
+                        }
+                    }
+                }
+            });
         });
     </script>
 </body>
