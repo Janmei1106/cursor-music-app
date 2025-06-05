@@ -1618,7 +1618,11 @@
                     return viewsB - viewsA;
                 });
 
-                musicRecommendations.innerHTML = `
+                // 清空現有內容
+                musicRecommendations.innerHTML = '';
+
+                // 添加心情記錄顯示
+                const moodRecordHtml = `
                     <div class="current-mood-record">
                         <div class="record-header">
                             <h3>本次心情記錄</h3>
@@ -1632,22 +1636,18 @@
                                 <span style="color: #666;">| ${lastMoodRecord.date}</span>
                             </p>
                             <p>${lastMoodRecord.note}</p>
-                            ${lastMoodRecord.songRatings && lastMoodRecord.songRatings.length > 0 ? `
-                                <div class="song-ratings">
-                                    <p><strong>歌曲評分：</strong></p>
-                                    ${lastMoodRecord.songRatings.map(rating => `
-                                        <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
-                                    `).join('')}
-                                </div>
-                            ` : ''}
                         </div>
                     </div>
-                    ${filteredSongs.length > 0
-                        ? `<div class="recommendations-header">
+                `;
+
+                // 添加推薦歌曲列表
+                const songsHtml = filteredSongs.length > 0
+                    ? `
+                        <div class="recommendations-header">
                             <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
                             <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
-                           </div>
-                           ${filteredSongs.map(song => `
+                        </div>
+                        ${filteredSongs.map(song => `
                             <div class="song-detail-card">
                                 <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
                                 <div class="song-info">
@@ -1680,10 +1680,12 @@
                                 </div>
                             </div>
                         `).join('')}`
-                        : `<p>沒有找到符合條件的歌曲</p>`}
-                `;
+                    : `<p>沒有找到符合條件的歌曲</p>`;
 
-                // 綁定評分事件
+                // 更新頁面內容
+                musicRecommendations.innerHTML = moodRecordHtml + songsHtml;
+
+                // 重新綁定評分事件
                 bindRatingEvents();
             }
 
@@ -1837,22 +1839,37 @@
                     mood: selectedMood,
                     scenarios: Array.from(selectedScenarios),
                     note,
-                    date
+                    date,
+                    songRatings: [] // 初始化為空陣列
                 };
 
                 const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
                 moodHistory.unshift(moodEntry);
                 localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
 
+                // 清除之前的評分記錄
+                localStorage.removeItem('songRatings');
+
+                // 重置表單
+                noteInput.value = '';
+                selectedMood = '';
+                selectedScenarios.clear();
+                document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
+                document.querySelectorAll('.scenario-tag').forEach(tag => tag.classList.remove('selected'));
+
+                // 更新歷史記錄
                 updateHistory();
                 lastMoodRecord = moodEntry;
 
-                // 重置選擇
-                selectedScenarios.clear();
-                document.querySelectorAll('.choice-button[data-scenario]').forEach(btn =>
-                    btn.classList.remove('selected'));
-
-                document.querySelector('[data-page="page-music"]').click();
+                // 切換到音樂推薦頁面並強制重新整理
+                const musicPageButton = document.querySelector('[data-page="page-music"]');
+                if (musicPageButton) {
+                    musicPageButton.click();
+                    // 強制重新載入音樂推薦
+                    setTimeout(() => {
+                        updateMusicRecommendations();
+                    }, 100);
+                }
             });
 
             function updateHistory() {
