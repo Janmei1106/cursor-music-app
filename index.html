@@ -1870,6 +1870,104 @@
                 width: 100%;
             }
         }
+
+        .song-link {
+            color: #3498db;
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .song-link:hover {
+            color: #2980b9;
+        }
+
+        .song-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .song-card.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .song-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .song-card-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .close-card {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #7f8c8d;
+            padding: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .close-card:hover {
+            color: #34495e;
+        }
+
+        .song-info {
+            margin-bottom: 15px;
+        }
+
+        .song-info-item {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #34495e;
+            width: 100px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .emotion-tag {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 15px;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
+
+        .date-tag {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 
@@ -3554,6 +3652,57 @@
                 overlay.style.display = 'none';
                 document.body.appendChild(overlay);
                 return overlay;
+            }
+
+            function bindSongClickEvents() {
+                const songLinks = document.querySelectorAll('.song-link');
+                const songCard = document.querySelector('.song-card');
+                const closeCard = document.querySelector('.close-card');
+                const overlay = document.querySelector('.dialog-overlay') || createOverlay();
+
+                songLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        const songData = JSON.parse(link.dataset.song);
+                        const songInfo = songCard.querySelector('.song-info');
+
+                        songInfo.innerHTML = `
+                            <div class="song-info-item">
+                                <div class="info-label">歌曲名稱</div>
+                                <div class="info-value">${songData.songName}</div>
+                            </div>
+                            <div class="song-info-item">
+                                <div class="info-label">使用者</div>
+                                <div class="info-value">${songData.nickname}</div>
+                            </div>
+                            <div class="song-info-item">
+                                <div class="info-label">情緒標籤</div>
+                                <div class="info-value">
+                                    <span class="emotion-tag">${songData.emotion}</span>
+                                </div>
+                            </div>
+                            <div class="song-info-item">
+                                <div class="info-label">記錄時間</div>
+                                <div class="info-value">${new Date(songData.timestamp).toLocaleString()}</div>
+                            </div>
+                        `;
+
+                        overlay.style.display = 'block';
+                        songCard.classList.add('show');
+                    });
+                });
+
+                closeCard.addEventListener('click', () => {
+                    songCard.classList.remove('show');
+                    overlay.style.display = 'none';
+                });
+
+                // 點擊遮罩層關閉卡片
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        songCard.classList.remove('show');
+                        overlay.style.display = 'none';
+                    }
+                });
             }
         });
     </script>
