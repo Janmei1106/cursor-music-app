@@ -2873,38 +2873,7 @@
 
                 const historyContainer = document.getElementById('history-container');
 
-                // 更新歷史記錄標題區域
-                const historyTitle = document.createElement('div');
-                historyTitle.className = 'history-title';
-                historyTitle.innerHTML = `
-                    <h2>歷史紀錄 ${filterNickname ? `- ${filterNickname}` : ''}</h2>
-                    ${filterNickname ? '<button class="clear-filter-btn">清除篩選</button>' : ''}
-                `;
-
-                // 清空並重新添加內容
-                historyContainer.innerHTML = '';
-                historyContainer.appendChild(historyTitle);
-
-                // 添加歷史記錄項目
-                filteredHistory.forEach(entry => {
-                    const historyItem = document.createElement('div');
-                    historyItem.className = 'history-item';
-                    historyItem.innerHTML = `
-                        <div class="history-content">
-                            <div class="history-header">
-                                <span class="nickname">${entry.nickname}</span>
-                                <span class="date-tag">${new Date(entry.timestamp).toLocaleString()}</span>
-                            </div>
-                            <div class="history-details">
-                                <span class="song-link" data-song='${JSON.stringify(entry)}'>${entry.songName}</span>
-                                <span class="emotion-tag">${entry.emotion}</span>
-                            </div>
-                        </div>
-                    `;
-                    historyContainer.appendChild(historyItem);
-                });
-
-                // 添加歌曲卡片容器（如果不存在）
+                // 確保歌曲卡片容器存在
                 if (!document.querySelector('.song-card')) {
                     const songCard = document.createElement('div');
                     songCard.className = 'song-card';
@@ -2918,28 +2887,40 @@
                     document.body.appendChild(songCard);
                 }
 
+                // 更新歷史記錄內容
+                historyContainer.innerHTML = filteredHistory.map(entry => {
+                    const songData = JSON.stringify(entry).replace(/"/g, '&quot;');
+                    return `
+                        <div class="history-item">
+                            <div class="history-content">
+                                <div class="history-header">
+                                    <span class="nickname">${entry.nickname}</span>
+                                    <span class="date-tag">${new Date(entry.timestamp).toLocaleString()}</span>
+                                </div>
+                                <div class="history-details">
+                                    <span class="song-link" data-song="${songData}">${entry.songName}</span>
+                                    <span class="emotion-tag">${entry.emotion}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
                 // 添加清空記錄按鈕
-                const clearHistorySection = document.createElement('div');
-                clearHistorySection.className = 'clear-history-section';
-                clearHistorySection.innerHTML = `
-                    <button class="clear-history-btn">
-                        <span class="btn-icon">🗑️</span>
-                        清空所有記錄
-                    </button>
+                historyContainer.innerHTML += `
+                    <div class="clear-history-section">
+                        <button class="clear-history-btn">
+                            <span class="btn-icon">🗑️</span>
+                            清空所有記錄
+                        </button>
+                    </div>
                 `;
-                historyContainer.appendChild(clearHistorySection);
 
-                // 綁定事件
+                // 綁定歌曲點擊事件
                 bindSongClickEvents();
-                bindClearHistoryEvents();
 
-                // 綁定清除篩選按鈕事件
-                if (filterNickname) {
-                    const clearFilterBtn = document.querySelector('.clear-filter-btn');
-                    clearFilterBtn.addEventListener('click', () => {
-                        updateHistory();
-                    });
-                }
+                // 綁定清空記錄按鈕事件
+                bindClearHistoryEvents();
             }
 
             function bindSongClickEvents() {
@@ -2949,8 +2930,9 @@
                 const overlay = document.querySelector('.dialog-overlay') || createOverlay();
 
                 songLinks.forEach(link => {
-                    link.addEventListener('click', () => {
-                        const songData = JSON.parse(link.dataset.song);
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const songData = JSON.parse(link.getAttribute('data-song'));
                         const songInfo = songCard.querySelector('.song-info');
 
                         songInfo.innerHTML = `
@@ -2990,59 +2972,6 @@
                         overlay.style.display = 'none';
                     }
                 });
-            }
-
-            function bindClearHistoryEvents() {
-                const clearBtn = document.querySelector('.clear-history-btn');
-                const passwordDialog = document.querySelector('.password-dialog');
-                const passwordInput = document.querySelector('.password-input');
-                const confirmBtn = document.querySelector('.confirm-password');
-                const cancelBtn = document.querySelector('.cancel-password');
-                const errorMessage = document.querySelector('.error-message');
-                const overlay = document.querySelector('.dialog-overlay') || createOverlay();
-
-                clearBtn.addEventListener('click', () => {
-                    overlay.style.display = 'block';
-                    passwordDialog.classList.add('show');
-                    passwordInput.value = '';
-                    errorMessage.classList.remove('show');
-                });
-
-                confirmBtn.addEventListener('click', () => {
-                    const password = passwordInput.value;
-                    if (password === '931106') {
-                        localStorage.removeItem('moodHistory');
-                        passwordDialog.classList.remove('show');
-                        overlay.style.display = 'none';
-                        updateHistory();
-                        alert('所有記錄已清空');
-                    } else {
-                        errorMessage.classList.add('show');
-                        passwordInput.value = '';
-                        passwordInput.focus();
-                    }
-                });
-
-                cancelBtn.addEventListener('click', () => {
-                    passwordDialog.classList.remove('show');
-                    overlay.style.display = 'none';
-                    errorMessage.classList.remove('show');
-                });
-
-                // 按 Enter 鍵確認
-                passwordInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        confirmBtn.click();
-                    }
-                });
-            }
-
-            function createOverlay() {
-                const overlay = document.createElement('div');
-                overlay.className = 'dialog-overlay';
-                overlay.style.display = 'none';
-                document.body.appendChild(overlay);
-                return overlay;
             }
 
             function bindSearchEvents() {
