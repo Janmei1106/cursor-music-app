@@ -876,6 +876,157 @@
         .choices-container:hover {
             box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
         }
+
+        /* 評分系統樣式 */
+        .rating-container {
+            margin: 15px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .rating-title {
+            font-size: 0.95em;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .rating {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .stars {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .star {
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #e2e8f0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            user-select: none;
+        }
+
+        .star::before {
+            content: '★';
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: #FFD700;
+            opacity: 0;
+            transform: scale(1.1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .star:hover,
+        .star.active {
+            color: #FFD700;
+            transform: scale(1.1);
+        }
+
+        .star.active::before {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .star:hover~.star {
+            color: #e2e8f0;
+        }
+
+        .rating-feedback {
+            font-size: 0.9em;
+            color: #4a5568;
+            margin-left: 10px;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .rating-feedback.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .rating-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        .rating-emoji {
+            font-size: 1.2em;
+        }
+
+        .rating-messages {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .rating-messages.show {
+            opacity: 1;
+            top: -40px;
+        }
+
+        /* 動畫效果 */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .star.active.pulse {
+            animation: pulse 0.3s ease-in-out;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .rating-container {
+                padding: 10px;
+            }
+
+            .star {
+                font-size: 1.3em;
+            }
+
+            .rating-feedback {
+                font-size: 0.85em;
+            }
+
+            .rating-messages {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -1488,12 +1639,7 @@
                                         </div>
                                         ` : ''}
                                     </div>
-                                    <div class="rating" data-song="${song.歌名}">
-                                        ${Array(5).fill().map((_, i) => `
-                                            <span class="star" data-rating="${i + 1}">★</span>
-                                        `).join('')}
-                                    </div>
-                                    <div class="song-rating-display"></div>
+                                    ${generateRatingSystem(song.歌名)}
                                     <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
                                         在 YouTube 上播放
                                     </a>
@@ -1503,23 +1649,8 @@
                         : `<p>沒有找到符合條件的歌曲</p>`}
                 `;
 
-                // 綁定星級評分事件
-                document.querySelectorAll('.rating').forEach(ratingContainer => {
-                    const stars = ratingContainer.querySelectorAll('.star');
-                    const songName = ratingContainer.dataset.song;
-                    const displayElement = ratingContainer.nextElementSibling;
-
-                    stars.forEach(star => {
-                        star.addEventListener('click', () => {
-                            const rating = parseInt(star.dataset.rating);
-                            stars.forEach((s, index) => {
-                                s.classList.toggle('active', index < rating);
-                            });
-                            addSongRating(songName, rating);
-                            displayElement.textContent = `您給這首歌 ${rating} 顆星`;
-                        });
-                    });
-                });
+                // 綁定評分事件
+                bindRatingEvents();
             }
 
             // 格式化點閱率顯示
@@ -1714,46 +1845,144 @@
                 `).join('');
             }
 
-            // 在 moodHistory 中添加歌曲評分
-            function addSongRating(songName, rating) {
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+            // 評分系統的反饋訊息
+            const ratingFeedback = {
+                1: { text: "不太喜歡", emoji: "😕" },
+                2: { text: "還可以", emoji: "🙂" },
+                3: { text: "不錯", emoji: "😊" },
+                4: { text: "很棒", emoji: "😄" },
+                5: { text: "超愛", emoji: "🥰" }
+            };
+
+            function generateRatingSystem(songName) {
+                const currentRating = getCurrentRating(songName);
+                return `
+                    <div class="rating-container">
+                        <div class="rating-title">為這首歌評分</div>
+                        <div class="rating" data-song="${songName}">
+                            <div class="stars">
+                                ${Array(5).fill().map((_, i) => `
+                                    <span class="star${i < currentRating ? ' active' : ''}" 
+                                          data-rating="${i + 1}">
+                                        ${i < currentRating ? '★' : '☆'}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            <div class="rating-feedback${currentRating ? ' show' : ''}">
+                                ${currentRating ? `${ratingFeedback[currentRating].emoji} ${ratingFeedback[currentRating].text}` : ''}
+                            </div>
+                        </div>
+                        <div class="rating-label">
+                            <span class="rating-emoji">🎵</span>
+                            <span>${currentRating ? '點擊星星修改評分' : '點擊星星進行評分'}</span>
+                        </div>
+                        <div class="rating-messages"></div>
+                    </div>
+                `;
+            }
+
+            // 綁定評分事件
+            function bindRatingEvents() {
+                document.querySelectorAll('.rating').forEach(ratingContainer => {
+                    const stars = ratingContainer.querySelectorAll('.star');
+                    const feedback = ratingContainer.querySelector('.rating-feedback');
+                    const messages = ratingContainer.querySelector('.rating-messages');
+                    const songName = ratingContainer.dataset.song;
+
+                    stars.forEach((star, index) => {
+                        // 懸浮效果
+                        star.addEventListener('mouseenter', () => {
+                            const rating = parseInt(star.dataset.rating);
+                            updateStarsDisplay(stars, rating);
+                            showRatingMessage(messages, rating);
+                        });
+
+                        // 點擊評分
+                        star.addEventListener('click', () => {
+                            const rating = parseInt(star.dataset.rating);
+                            stars.forEach(s => s.classList.remove('pulse'));
+                            star.classList.add('pulse');
+
+                            // 更新評分顯示
+                            updateStarsDisplay(stars, rating, true);
+                            updateRatingFeedback(feedback, rating);
+
+                            // 儲存評分
+                            saveRating(songName, rating);
+                        });
+                    });
+
+                    // 移出重置未確認的評分顯示
+                    ratingContainer.addEventListener('mouseleave', () => {
+                        const currentRating = getCurrentRating(songName);
+                        updateStarsDisplay(stars, currentRating);
+                        messages.classList.remove('show');
+                    });
+                });
+            }
+
+            // 更新星星顯示
+            function updateStarsDisplay(stars, rating, permanent = false) {
+                stars.forEach((star, index) => {
+                    if (permanent) {
+                        star.classList.toggle('active', index < rating);
+                    }
+                    star.textContent = index < rating ? '★' : '☆';
+                });
+            }
+
+            // 顯示評分訊息
+            function showRatingMessage(messages, rating) {
+                const feedback = ratingFeedback[rating];
+                messages.textContent = `${feedback.emoji} ${feedback.text}`;
+                messages.classList.add('show');
+            }
+
+            // 更新評分反饋
+            function updateRatingFeedback(feedback, rating) {
+                const { text, emoji } = ratingFeedback[rating];
+                feedback.textContent = `${emoji} ${text}`;
+                feedback.classList.add('show');
+            }
+
+            // 儲存評分
+            function saveRating(songName, rating) {
+                const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
+                ratings[songName] = {
+                    rating,
+                    date: new Date().toISOString()
+                };
+                localStorage.setItem('songRatings', JSON.stringify(ratings));
+
+                // 更新心情記錄中的評分
+                updateMoodRecordRating(songName, rating);
+            }
+
+            // 獲取當前評分
+            function getCurrentRating(songName) {
+                const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
+                return ratings[songName]?.rating || 0;
+            }
+
+            // 更新心情記錄中的評分
+            function updateMoodRecordRating(songName, rating) {
+                const moodHistory = JSON.parse(localStorage.getItem('moodHistory') || '[]');
                 if (moodHistory.length > 0) {
                     const latestMood = moodHistory[0];
                     if (!latestMood.songRatings) {
                         latestMood.songRatings = [];
                     }
-                    latestMood.songRatings.push({ songName, rating });
-                    localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
-                }
-                // 更新歷史記錄
-                updateHistory();
 
-                // 更新本次心情記錄顯示
-                const currentMoodRecord = document.querySelector('.current-mood-record');
-                if (currentMoodRecord) {
-                    currentMoodRecord.innerHTML = `
-                        <div class="record-header">
-                            <h3>本次心情記錄</h3>
-                        </div>
-                        <div class="mood-entry">
-                            <p>
-                                <strong>${moodHistory[0].mood}</strong>
-                                ${moodHistory[0].scenarios && moodHistory[0].scenarios.length > 0
-                            ? `<span class="selected-scenario">| ${moodHistory[0].scenarios.join(', ')}</span>`
-                            : ''}
-                                <span style="color: #666;">| ${moodHistory[0].date}</span>
-                            </p>
-                            <p>${moodHistory[0].note}</p>
-                            ${moodHistory[0].songRatings && moodHistory[0].songRatings.length > 0 ? `
-                                <div class="song-ratings">
-                                    <p><strong>歌曲評分：</strong></p>
-                                    ${moodHistory[0].songRatings.map(rating => `
-                                        <p>${rating.songName}: ${Array(rating.rating).fill('★').join('')}</p>
-                                    `).join('')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
+                    // 更新或添加評分
+                    const existingRating = latestMood.songRatings.find(r => r.songName === songName);
+                    if (existingRating) {
+                        existingRating.rating = rating;
+                    } else {
+                        latestMood.songRatings.push({ songName, rating });
+                    }
+
+                    localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
+                    updateHistory(); // 更新歷史記錄顯示
                 }
             }
 
