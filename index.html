@@ -1745,10 +1745,16 @@
                     // 綁定情境標籤點擊事件
                     document.querySelectorAll('.scenario-tag').forEach(tag => {
                         tag.addEventListener('click', () => {
-                            document.querySelectorAll('.scenario-tag').forEach(t =>
-                                t.classList.remove('selected'));
-                            tag.classList.add('selected');
-                            selectedScenarios.add(tag.dataset.scenario);
+                            const scenario = tag.dataset.scenario;
+                            if (selectedScenarios.has(scenario)) {
+                                // 如果已經選中，則取消選中
+                                selectedScenarios.delete(scenario);
+                                tag.classList.remove('selected');
+                            } else {
+                                // 如果未選中，則選中
+                                selectedScenarios.add(scenario);
+                                tag.classList.add('selected');
+                            }
                             updateSelectedMoodDisplay();
                         });
                     });
