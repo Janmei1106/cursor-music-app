@@ -1693,7 +1693,7 @@
                                 <div class="song-ratings">
                                     <p><strong>歌曲評分：</strong></p>
                                     <div class="rating-list">
-                                    ${lastMoodRecord.songRatings.map(rating => `
+                                        ${lastMoodRecord.songRatings.map(rating => `
                                             <div class="rating-item">
                                                 <span class="song-name">${rating.songName}</span>
                                                 <span class="rating-stars">
@@ -1701,10 +1701,16 @@
                                                     ${Array(5 - rating.rating).fill('☆').join('')}
                                                 </span>
                                             </div>
-                                    `).join('')}
+                                        `).join('')}
                                     </div>
                                 </div>
                             ` : ''}
+                        </div>
+                        <div class="finish-record-sticky">
+                            <button class="finish-record-btn">
+                                <span class="btn-icon">✓</span>
+                                完成紀錄
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1715,8 +1721,8 @@
                         <div class="recommendations-header">
                             <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
                             <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
-                           </div>
-                           ${filteredSongs.map(song => `
+                        </div>
+                        ${filteredSongs.map(song => `
                             <div class="song-detail-card">
                                 <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
                                 <div class="song-info">
@@ -1756,6 +1762,29 @@
 
                 // 重新綁定評分事件
                 bindRatingEvents();
+
+                // 重新綁定完成紀錄按鈕事件
+                const finishRecordBtn = document.querySelector('.finish-record-btn');
+                if (finishRecordBtn) {
+                    finishRecordBtn.addEventListener('click', () => {
+                        // 切換到心情記錄頁面
+                        const moodPageButton = document.querySelector('[data-page="page-mood"]');
+                        if (moodPageButton) {
+                            moodPageButton.click();
+
+                            // 確保歷史記錄是最新的
+                            updateHistory();
+
+                            // 滾動到歷史記錄區域
+                            const historyContainer = document.getElementById('history-container');
+                            if (historyContainer) {
+                                setTimeout(() => {
+                                    historyContainer.scrollIntoView({ behavior: 'smooth' });
+                                }, 100);
+                            }
+                        }
+                    });
+                }
             }
 
             // 格式化點閱率顯示
@@ -2179,29 +2208,6 @@
             // 初始化
             updateHistory();
             lastMoodRecord = getLastMoodRecord();
-
-            // 添加完成紀錄按鈕的事件監聽
-            const finishRecordBtn = document.querySelector('.finish-record-btn');
-            if (finishRecordBtn) {
-                finishRecordBtn.addEventListener('click', () => {
-                    // 切換到心情記錄頁面
-                    const moodPageButton = document.querySelector('[data-page="page-mood"]');
-                    if (moodPageButton) {
-                        moodPageButton.click();
-
-                        // 確保歷史記錄是最新的
-                        updateHistory();
-
-                        // 滾動到歷史記錄區域
-                        const historyContainer = document.getElementById('history-container');
-                        if (historyContainer) {
-                            setTimeout(() => {
-                                historyContainer.scrollIntoView({ behavior: 'smooth' });
-                            }, 100);
-                        }
-                    }
-                });
-            }
         });
     </script>
 </body>
