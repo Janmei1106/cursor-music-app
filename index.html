@@ -2164,8 +2164,16 @@
         </div>
     </div>
 
+    <!-- SheetJS CDN 應放在主 JS 之前 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // 檢查 XLSX 是否已載入
+            if (typeof XLSX === 'undefined') {
+                alert('XLSX 函式庫未正確載入，請檢查網路或 CDN 連線。');
+                return;
+            }
+
             const pages = {
                 upload: document.getElementById('page-upload'),
                 mood: document.getElementById('page-mood'),
@@ -2722,7 +2730,7 @@
                                         ` : ''}
                                     </div>
                                     ${generateRatingSystem(song.歌名)}
-                                    <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
+                                    <a href="${sanitizeYouTubeLink(song.YouTube連結)}" target="_blank" class="youtube-link">
                                         在 YouTube 上播放
                                     </a>
                                 </div>
@@ -3864,6 +3872,16 @@
                         overlay.style.display = 'none';
                     }
                 });
+            }
+
+            // --- 新增 YouTube 連結清理函數 ---
+            function sanitizeYouTubeLink(link) {
+                if (!link) return '#';
+                link = link.trim().replace(/^[\u3000\s]+|[\u3000\s]+$/g, ''); // 去除全形/半形空白
+                if (!/^https?:\/\//i.test(link)) {
+                    link = 'https://' + link.replace(/^\/+/, '');
+                }
+                return link;
             }
         });
     </script>
