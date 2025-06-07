@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>每日情緒記錄與音樂</title>
-    <!-- 將 SheetJS CDN 換成 jsDelivr 版本，提升跨瀏覽器相容性 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
     <style>
         body {
@@ -2776,12 +2775,6 @@
 
             // Excel 檔案上傳處理
             excelFileInput.addEventListener('change', async (e) => {
-                // 新增 XLSX 存在性檢查
-                if (typeof XLSX === 'undefined') {
-                    uploadStatus.textContent = 'XLSX 函式庫載入失敗，請重新整理頁面或更換瀏覽器。';
-                    uploadStatus.style.color = '#f44336';
-                    return;
-                }
                 const file = e.target.files[0];
                 if (file) {
                     uploadStatus.textContent = '正在處理檔案...';
