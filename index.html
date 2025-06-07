@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>每日情緒記錄與音樂</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <!-- SheetJS CDN 改用 jsDelivr 並加 onerror -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"
+        onerror="alert('XLSX 載入失敗，請檢查網路或瀏覽器設定！')"></script>
     <style>
         body {
             font-family: '微軟正黑體', sans-serif;
@@ -2165,381 +2167,510 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const pages = {
-                upload: document.getElementById('page-upload'),
-                mood: document.getElementById('page-mood'),
-                music: document.getElementById('page-music')
-            };
-
-            const navButtons = document.querySelectorAll('.nav-button');
-            const moodGrid = document.getElementById('mood-grid');
-            const noteInput = document.querySelector('.note-input');
-            const submitBtn = document.querySelector('.submit-btn');
-            const historyContainer = document.getElementById('history-container');
-            const musicRecommendations = document.getElementById('music-recommendations');
-            const excelFileInput = document.getElementById('excel-file');
-            const uploadStatus = document.getElementById('upload-status');
-            const languageButtons = document.querySelectorAll('.choice-button[data-language]');
-            const selectedMoodDisplay = document.getElementById('selected-mood-display');
-            const scenarioSection = document.querySelector('.scenario-section');
-            const scenarioGrid = document.getElementById('scenario-grid');
-
-            let selectedMood = '';
-            let selectedLanguage = '';
-            let songDatabase = [];
-            let lastMoodRecord = null;
-            let moodEmojis = {
-                // 正面情緒
-                '開心': '🌟',
-                '快樂': '✨',
-                '喜悅': '🌸',
-                '興奮': '⭐',
-                '放鬆': '🍃',
-                '愉悅': '🌺',
-                '幸福': '💝',
-                '滿足': '💫',
-
-                // 負面情緒
-                '難過': '💧',
-                '悲傷': '💔',
-                '憂鬱': '🌧️',
-                '沮喪': '⛈️',
-                '痛苦': '💫',
-                '失望': '🥀',
-                '遺憾': '🍂',
-                '後悔': '🌙',
-
-                // 平靜/中性情緒
-                '平靜': '🌊',
-                '安詳': '🕊️',
-                '淡然': '☁️',
-                '冷靜': '❄️',
-
-                // 強烈情緒
-                '憤怒': '⚡',
-                '生氣': '🔥',
-                '激動': '✨',
-                '熱情': '🌞',
-
-                // 複雜情緒
-                '感動': '✨',
-                '思念': '🌙',
-                '期待': '🌈',
-                '緊張': '💫',
-                '焦慮': '🌪️',
-                '驚訝': '⭐',
-                '困惑': '❓',
-            };
-            let selectedScenarios = new Set();
-
-            // 情緒分類定義
-            const moodCategories = {
-                '正面': {
-                    icon: '🌟',
-                    moods: ['開心', '快樂', '喜悅', '興奮', '放鬆', '愉悅', '幸福', '滿足',
-                        '平靜', '安詳', '溫暖', '感動', '期待', '熱情', '振奮', '自信']
-                },
-                '負面': {
-                    icon: '💔',
-                    moods: ['難過', '悲傷', '憂鬱', '沮喪', '痛苦', '失望', '遺憾', '後悔',
-                        '憤怒', '生氣', '焦慮', '緊張', '煩躁', '寂寞', '無奈', '疲倦']
-                },
-                '其他': {
-                    icon: '✨',
-                    moods: ['複雜', '矛盾', '驚訝', '困惑', '懷念', '期待'] // 預設的其他情緒
-                }
-            };
-
-            let selectedCategory = '';
-
-            function analyzeMoodCategory(mood) {
-                // 移除標點符號和空格
-                mood = mood.replace(/[，。、；,.;\s]/g, '');
-
-                // 檢查是否在正面情緒列表中
-                if (moodCategories['正面'].moods.some(m => mood.includes(m))) {
-                    return '正面';
-                }
-                // 檢查是否在負面情緒列表中
-                if (moodCategories['負面'].moods.some(m => mood.includes(m))) {
-                    return '負面';
-                }
-                // 如果都沒有匹配，返回其他
-                return '其他';
-            }
-
-            function generateCategoryButtons() {
-                const categoryIcons = {
-                    '正面': '💝',
-                    '負面': '💔',
-                    '其他': '✨'
+        // 將主程式包進 main()
+        function main() {
+            document.addEventListener('DOMContentLoaded', () => {
+                const pages = {
+                    upload: document.getElementById('page-upload'),
+                    mood: document.getElementById('page-mood'),
+                    music: document.getElementById('page-music')
                 };
 
-                return `
-                    <div class="mood-category-section">
-                        <div class="section-label">選擇心情類別：</div>
-                        <div class="category-tabs">
-                            ${Object.entries(moodCategories).map(([category, data]) => `
-                                <div class="category-tab" data-category="${category}">
-                                    <span class="category-icon">${categoryIcons[category]}</span>
-                                    ${category}
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="subcategory-container" style="display: none;">
-                            <button class="reset-button">重新選擇</button>
-                            <div id="mood-subcategory-grid"></div>
-                        </div>
-                    </div>
-                `;
-            }
+                const navButtons = document.querySelectorAll('.nav-button');
+                const moodGrid = document.getElementById('mood-grid');
+                const noteInput = document.querySelector('.note-input');
+                const submitBtn = document.querySelector('.submit-btn');
+                const historyContainer = document.getElementById('history-container');
+                const musicRecommendations = document.getElementById('music-recommendations');
+                const excelFileInput = document.getElementById('excel-file');
+                const uploadStatus = document.getElementById('upload-status');
+                const languageButtons = document.querySelectorAll('.choice-button[data-language]');
+                const selectedMoodDisplay = document.getElementById('selected-mood-display');
+                const scenarioSection = document.querySelector('.scenario-section');
+                const scenarioGrid = document.getElementById('scenario-grid');
 
-            function showMoodSubcategories(allMoods, category) {
-                const subcategoryContainer = document.querySelector('.subcategory-container');
+                let selectedMood = '';
+                let selectedLanguage = '';
+                let songDatabase = [];
+                let lastMoodRecord = null;
+                let moodEmojis = {
+                    // 正面情緒
+                    '開心': '🌟',
+                    '快樂': '✨',
+                    '喜悅': '🌸',
+                    '興奮': '⭐',
+                    '放鬆': '🍃',
+                    '愉悅': '🌺',
+                    '幸福': '💝',
+                    '滿足': '💫',
 
-                // 如果已經選中了情緒，不要更新顯示
-                if (selectedMood && document.querySelector('.mood-card.selected')) {
-                    return;
+                    // 負面情緒
+                    '難過': '💧',
+                    '悲傷': '💔',
+                    '憂鬱': '🌧️',
+                    '沮喪': '⛈️',
+                    '痛苦': '💫',
+                    '失望': '🥀',
+                    '遺憾': '🍂',
+                    '後悔': '🌙',
+
+                    // 平靜/中性情緒
+                    '平靜': '🌊',
+                    '安詳': '🕊️',
+                    '淡然': '☁️',
+                    '冷靜': '❄️',
+
+                    // 強烈情緒
+                    '憤怒': '⚡',
+                    '生氣': '🔥',
+                    '激動': '✨',
+                    '熱情': '🌞',
+
+                    // 複雜情緒
+                    '感動': '✨',
+                    '思念': '🌙',
+                    '期待': '🌈',
+                    '緊張': '💫',
+                    '焦慮': '🌪️',
+                    '驚訝': '⭐',
+                    '困惑': '❓',
+                };
+                let selectedScenarios = new Set();
+
+                // 情緒分類定義
+                const moodCategories = {
+                    '正面': {
+                        icon: '🌟',
+                        moods: ['開心', '快樂', '喜悅', '興奮', '放鬆', '愉悅', '幸福', '滿足',
+                            '平靜', '安詳', '溫暖', '感動', '期待', '熱情', '振奮', '自信']
+                    },
+                    '負面': {
+                        icon: '💔',
+                        moods: ['難過', '悲傷', '憂鬱', '沮喪', '痛苦', '失望', '遺憾', '後悔',
+                            '憤怒', '生氣', '焦慮', '緊張', '煩躁', '寂寞', '無奈', '疲倦']
+                    },
+                    '其他': {
+                        icon: '✨',
+                        moods: ['複雜', '矛盾', '驚訝', '困惑', '懷念', '期待'] // 預設的其他情緒
+                    }
+                };
+
+                let selectedCategory = '';
+
+                function analyzeMoodCategory(mood) {
+                    // 移除標點符號和空格
+                    mood = mood.replace(/[，。、；,.;\s]/g, '');
+
+                    // 檢查是否在正面情緒列表中
+                    if (moodCategories['正面'].moods.some(m => mood.includes(m))) {
+                        return '正面';
+                    }
+                    // 檢查是否在負面情緒列表中
+                    if (moodCategories['負面'].moods.some(m => mood.includes(m))) {
+                        return '負面';
+                    }
+                    // 如果都沒有匹配，返回其他
+                    return '其他';
                 }
 
-                // 移除所有標籤的 active 類
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.classList.remove('active');
-                });
+                function generateCategoryButtons() {
+                    const categoryIcons = {
+                        '正面': '💝',
+                        '負面': '💔',
+                        '其他': '✨'
+                    };
 
-                // 為當前選中的標籤添加 active 類
-                const currentTab = document.querySelector(`.category-tab[data-category="${category}"]`);
-                if (currentTab) {
-                    currentTab.classList.add('active');
-                }
-
-                // 過濾所選類別的情緒
-                const categoryMoods = allMoods.filter(mood =>
-                    analyzeMoodCategory(mood) === category
-                );
-
-                // 更新子類別網格
-                const subcategoryGrid = document.getElementById('mood-subcategory-grid');
-                subcategoryGrid.innerHTML = `
-                    <div class="mood-grid">
-                        ${categoryMoods.map(mood => `
-                            <div class="mood-card${mood === selectedMood ? ' selected' : ''}" data-mood="${mood}">
-                                <div class="mood-emoji">${getEmoticonForMood(mood)}</div>
-                                <div class="mood-label">${mood}</div>
+                    return `
+                        <div class="mood-category-section">
+                            <div class="section-label">選擇心情類別：</div>
+                            <div class="category-tabs">
+                                ${Object.entries(moodCategories).map(([category, data]) => `
+                                    <div class="category-tab" data-category="${category}">
+                                        <span class="category-icon">${categoryIcons[category]}</span>
+                                        ${category}
+                                    </div>
+                                `).join('')}
                             </div>
-                        `).join('')}
-                    </div>
-                `;
+                            <div class="subcategory-container" style="display: none;">
+                                <button class="reset-button">重新選擇</button>
+                                <div id="mood-subcategory-grid"></div>
+                            </div>
+                        </div>
+                    `;
+                }
 
-                // 顯示子類別容器
-                subcategoryContainer.style.display = 'block';
-            }
+                function showMoodSubcategories(allMoods, category) {
+                    const subcategoryContainer = document.querySelector('.subcategory-container');
 
-            // 修改重置選擇函數
-            function resetMoodSelection() {
-                selectedMood = '';
-                selectedScenarios.clear();
-
-                document.querySelectorAll('.mood-card').forEach(card => {
-                    card.classList.remove('selected');
-                });
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                document.querySelectorAll('.scenario-tag').forEach(tag => {
-                    tag.classList.remove('selected');
-                });
-
-                document.querySelector('.subcategory-container').style.display = 'none';
-
-                updateSelectedMoodDisplay();
-            }
-
-            function generateMoodCards(moods) {
-                const uniqueMoods = [...new Set(
-                    moods.flatMap(mood => processMoodString(mood))
-                )];
-
-                // 生成類別選擇按鈕
-                moodGrid.innerHTML = generateCategoryButtons();
-
-                // 綁定重新選擇按鈕事件
-                const resetButton = document.querySelector('.reset-button');
-                resetButton.addEventListener('click', resetMoodSelection);
-
-                // 綁定類別標籤懸停事件
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.addEventListener('mouseenter', () => {
-                        const category = tab.dataset.category;
-                        if (!selectedMood) {
-                            showMoodSubcategories(uniqueMoods, category);
-                        }
-                    });
-                });
-
-                // 初始隱藏子類別區域
-                document.querySelector('.subcategory-container').style.display = 'none';
-
-                // 綁定情緒卡片點擊事件
-                document.addEventListener('click', (e) => {
-                    const moodCard = e.target.closest('.mood-card');
-                    if (moodCard) {
-                        e.preventDefault();
-                        document.querySelectorAll('.mood-card').forEach(c =>
-                            c.classList.remove('selected'));
-                        moodCard.classList.add('selected');
-                        selectedMood = moodCard.dataset.mood;
-
-                        // 顯示重新選擇按鈕
-                        document.querySelector('.reset-button').style.display = 'block';
-
-                        selectedScenarios.clear();
-                        updateScenarioSection(selectedMood);
-                        updateSelectedMoodDisplay();
-                    }
-                });
-
-                // 監聽整個類別區域的懸停事件
-                const categorySection = document.querySelector('.mood-category-section');
-                const subcategoryContainer = document.querySelector('.subcategory-container');
-
-                categorySection.addEventListener('mouseleave', () => {
-                    if (!selectedMood) {
-                        subcategoryContainer.style.display = 'none';
-                    }
-                });
-
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.addEventListener('mouseenter', () => {
-                        if (!selectedMood) {
-                            subcategoryContainer.style.display = 'block';
-                        }
-                    });
-                });
-            }
-
-            // 在頁面加載時獲取最後一次的心情記錄
-            function getLastMoodRecord() {
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-                return moodHistory.length > 0 ? moodHistory[0] : null;
-            }
-
-            // 頁面導航
-            navButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    if (!songDatabase.length && button.dataset.page !== 'page-upload') {
-                        alert('請先上傳音樂資料庫！');
+                    // 如果已經選中了情緒，不要更新顯示
+                    if (selectedMood && document.querySelector('.mood-card.selected')) {
                         return;
                     }
 
-                    if (button.dataset.page === 'page-music') {
-                        lastMoodRecord = getLastMoodRecord();
-                        if (!lastMoodRecord) {
-                            alert('請先記錄心情！');
-                            return;
-                        }
+                    // 移除所有標籤的 active 類
+                    document.querySelectorAll('.category-tab').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+
+                    // 為當前選中的標籤添加 active 類
+                    const currentTab = document.querySelector(`.category-tab[data-category="${category}"]`);
+                    if (currentTab) {
+                        currentTab.classList.add('active');
                     }
 
-                    navButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
+                    // 過濾所選類別的情緒
+                    const categoryMoods = allMoods.filter(mood =>
+                        analyzeMoodCategory(mood) === category
+                    );
 
-                    Object.values(pages).forEach(page => page.classList.remove('active'));
-                    document.getElementById(button.dataset.page).classList.add('active');
-                });
-            });
-
-            // 獲取所有可能的情境
-            function getAllScenarios() {
-                return [...new Set(
-                    songDatabase
-                        .filter(song => song.情境)
-                        .map(song => song.情境)
-                        .flatMap(scenario => processMoodString(scenario))
-                )];
-            }
-
-            // 修改情境按鈕生成函數
-            function generateScenarioButtons() {
-                const scenarios = getAllScenarios();
-                const scenarioCategories = {
-                    '舞台表演': ['舞台表演', '派對氛圍', '節奏感十足', '熱情升溫', '主動出擊'],
-                    '浪漫': ['初戀告白', '尋求愛情的肯定回應', '愛情追逐', '西班牙風情'],
-                    '夏日': ['夏日夜晚', '夏日戀愛', '夏日派對', '夏日遊逛'],
-                    '舞蹈': ['海邊狂舞', '舞池情緒', '舞池擺動', '街頭舞蹈'],
-                    '其他': ['展現自信', '自我肯定', '關注內在的真實自我', '打破刻板印象']
-                };
-
-                scenarioGrid.innerHTML = `
-                    <div class="scenario-container">
-                        ${Object.entries(scenarioCategories).map(([category, items]) =>
-                    items.length ? `
-                                <div class="category-row">
-                                    <span class="scenario-category">${category}</span>
-                                    ${items.map(scenario => `
-                                        <div class="scenario-tag${selectedScenarios.has(scenario) ? ' selected' : ''}" 
-                                             data-scenario="${scenario}">
-                        ${scenario}
-                                        </div>
-                                    `).join('')}
+                    // 更新子類別網格
+                    const subcategoryGrid = document.getElementById('mood-subcategory-grid');
+                    subcategoryGrid.innerHTML = `
+                        <div class="mood-grid">
+                            ${categoryMoods.map(mood => `
+                                <div class="mood-card${mood === selectedMood ? ' selected' : ''}" data-mood="${mood}">
+                                    <div class="mood-emoji">${getEmoticonForMood(mood)}</div>
+                                    <div class="mood-label">${mood}</div>
                                 </div>
-                            ` : ''
-                ).join('')}
-                    </div>
-                `;
+                            `).join('')}
+                        </div>
+                    `;
 
-                // 綁定情境標籤點擊事件
-                document.querySelectorAll('.scenario-tag').forEach(tag => {
-                    tag.addEventListener('click', () => {
-                        const scenario = tag.dataset.scenario;
+                    // 顯示子類別容器
+                    subcategoryContainer.style.display = 'block';
+                }
 
-                        if (selectedScenarios.has(scenario)) {
-                            selectedScenarios.delete(scenario);
-                            tag.classList.remove('selected');
-                        } else {
-                            selectedScenarios.add(scenario);
-                            tag.classList.add('selected');
+                // 修改重置選擇函數
+                function resetMoodSelection() {
+                    selectedMood = '';
+                    selectedScenarios.clear();
+
+                    document.querySelectorAll('.mood-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    document.querySelectorAll('.category-tab').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    document.querySelectorAll('.scenario-tag').forEach(tag => {
+                        tag.classList.remove('selected');
+                    });
+
+                    document.querySelector('.subcategory-container').style.display = 'none';
+
+                    updateSelectedMoodDisplay();
+                }
+
+                function generateMoodCards(moods) {
+                    const uniqueMoods = [...new Set(
+                        moods.flatMap(mood => processMoodString(mood))
+                    )];
+
+                    // 生成類別選擇按鈕
+                    moodGrid.innerHTML = generateCategoryButtons();
+
+                    // 綁定重新選擇按鈕事件
+                    const resetButton = document.querySelector('.reset-button');
+                    resetButton.addEventListener('click', resetMoodSelection);
+
+                    // 綁定類別標籤懸停事件
+                    document.querySelectorAll('.category-tab').forEach(tab => {
+                        tab.addEventListener('mouseenter', () => {
+                            const category = tab.dataset.category;
+                            if (!selectedMood) {
+                                showMoodSubcategories(uniqueMoods, category);
+                            }
+                        });
+                    });
+
+                    // 初始隱藏子類別區域
+                    document.querySelector('.subcategory-container').style.display = 'none';
+
+                    // 綁定情緒卡片點擊事件
+                    document.addEventListener('click', (e) => {
+                        const moodCard = e.target.closest('.mood-card');
+                        if (moodCard) {
+                            e.preventDefault();
+                            document.querySelectorAll('.mood-card').forEach(c =>
+                                c.classList.remove('selected'));
+                            moodCard.classList.add('selected');
+                            selectedMood = moodCard.dataset.mood;
+
+                            // 顯示重新選擇按鈕
+                            document.querySelector('.reset-button').style.display = 'block';
+
+                            selectedScenarios.clear();
+                            updateScenarioSection(selectedMood);
+                            updateSelectedMoodDisplay();
+                        }
+                    });
+
+                    // 監聽整個類別區域的懸停事件
+                    const categorySection = document.querySelector('.mood-category-section');
+                    const subcategoryContainer = document.querySelector('.subcategory-container');
+
+                    categorySection.addEventListener('mouseleave', () => {
+                        if (!selectedMood) {
+                            subcategoryContainer.style.display = 'none';
+                        }
+                    });
+
+                    document.querySelectorAll('.category-tab').forEach(tab => {
+                        tab.addEventListener('mouseenter', () => {
+                            if (!selectedMood) {
+                                subcategoryContainer.style.display = 'block';
+                            }
+                        });
+                    });
+                }
+
+                // 在頁面加載時獲取最後一次的心情記錄
+                function getLastMoodRecord() {
+                    const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                    return moodHistory.length > 0 ? moodHistory[0] : null;
+                }
+
+                // 頁面導航
+                navButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (!songDatabase.length && button.dataset.page !== 'page-upload') {
+                            alert('請先上傳音樂資料庫！');
+                            return;
                         }
 
-                        updateSelectedMoodDisplay();
+                        if (button.dataset.page === 'page-music') {
+                            lastMoodRecord = getLastMoodRecord();
+                            if (!lastMoodRecord) {
+                                alert('請先記錄心情！');
+                                return;
+                            }
+                        }
+
+                        navButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+
+                        Object.values(pages).forEach(page => page.classList.remove('active'));
+                        document.getElementById(button.dataset.page).classList.add('active');
                     });
                 });
-            }
 
-            // 處理語言按鈕點擊
-            languageButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    languageButtons.forEach(btn => btn.classList.remove('selected'));
-                    button.classList.add('selected');
-                    selectedLanguage = button.dataset.language;
-                    updateMusicRecommendations();
+                // 獲取所有可能的情境
+                function getAllScenarios() {
+                    return [...new Set(
+                        songDatabase
+                            .filter(song => song.情境)
+                            .map(song => song.情境)
+                            .flatMap(scenario => processMoodString(scenario))
+                    )];
+                }
+
+                // 修改情境按鈕生成函數
+                function generateScenarioButtons() {
+                    const scenarios = getAllScenarios();
+                    const scenarioCategories = {
+                        '舞台表演': ['舞台表演', '派對氛圍', '節奏感十足', '熱情升溫', '主動出擊'],
+                        '浪漫': ['初戀告白', '尋求愛情的肯定回應', '愛情追逐', '西班牙風情'],
+                        '夏日': ['夏日夜晚', '夏日戀愛', '夏日派對', '夏日遊逛'],
+                        '舞蹈': ['海邊狂舞', '舞池情緒', '舞池擺動', '街頭舞蹈'],
+                        '其他': ['展現自信', '自我肯定', '關注內在的真實自我', '打破刻板印象']
+                    };
+
+                    scenarioGrid.innerHTML = `
+                        <div class="scenario-container">
+                            ${Object.entries(scenarioCategories).map(([category, items]) =>
+                        items.length ? `
+                                    <div class="category-row">
+                                        <span class="scenario-category">${category}</span>
+                                        ${items.map(scenario => `
+                                            <div class="scenario-tag${selectedScenarios.has(scenario) ? ' selected' : ''}" 
+                                                 data-scenario="${scenario}">
+                        ${scenario}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''
+                    ).join('')}
+                        </div>
+                    `;
+
+                    // 綁定情境標籤點擊事件
+                    document.querySelectorAll('.scenario-tag').forEach(tag => {
+                        tag.addEventListener('click', () => {
+                            const scenario = tag.dataset.scenario;
+
+                            if (selectedScenarios.has(scenario)) {
+                                selectedScenarios.delete(scenario);
+                                tag.classList.remove('selected');
+                            } else {
+                                selectedScenarios.add(scenario);
+                                tag.classList.add('selected');
+                            }
+
+                            updateSelectedMoodDisplay();
+                        });
+                    });
+                }
+
+                // 處理語言按鈕點擊
+                languageButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        languageButtons.forEach(btn => btn.classList.remove('selected'));
+                        button.classList.add('selected');
+                        selectedLanguage = button.dataset.language;
+                        updateMusicRecommendations();
+                    });
                 });
-            });
 
-            // 在音樂推薦頁面顯示當前心情記錄
-            function showCurrentMoodRecord() {
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-                if (moodHistory.length > 0) {
-                    const latestMood = moodHistory[0];
-                    return `
+                // 在音樂推薦頁面顯示當前心情記錄
+                function showCurrentMoodRecord() {
+                    const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                    if (moodHistory.length > 0) {
+                        const latestMood = moodHistory[0];
+                        return `
+                            <div class="current-mood-record">
+                                <div class="record-header">
+                                    <h3>本次心情記錄</h3>
+                                </div>
+                                <div class="mood-entry">
+                                    <p>
+                                        <strong>${latestMood.mood}</strong>
+                                        ${latestMood.scenarios && latestMood.scenarios.length > 0
+                                ? `<span class="selected-scenario">| ${latestMood.scenarios.join(', ')}</span>`
+                                : ''}
+                                        <span style="color: #666;">| ${latestMood.date}</span>
+                                    </p>
+                                    <p>${latestMood.note}</p>
+                                    ${latestMood.songRatings && latestMood.songRatings.length > 0 ? `
+                                        <div class="song-ratings">
+                                            <p><strong>歌曲評分：</strong></p>
+                                            <div class="rating-list">
+                                            ${latestMood.songRatings.map(rating => `
+                                                    <div class="rating-item">
+                                                        <span class="song-name">${rating.songName}</span>
+                                                        <span class="rating-stars">
+                                                            ${Array(rating.rating).fill('★').join('')}
+                                                            ${Array(5 - rating.rating).fill('☆').join('')}
+                                                        </span>
+                                                    </div>
+                                            `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="finish-record-sticky">
+                                    <button class="finish-record-btn">
+                                        <span class="btn-icon">✓</span>
+                                        完成紀錄
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return '';
+                }
+
+                // 更新音樂推薦頁面的樣式
+                const styleSheet = document.createElement('style');
+                styleSheet.textContent = `
+                    .current-mood-record {
+                        margin: 30px 0;
+                        padding: 20px;
+                        background: white;
+                        border-radius: 12px;
+                        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+                    }
+
+                    .record-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 15px;
+                    }
+
+                    .record-header h3 {
+                        margin: 0;
+                        color: #333;
+                    }
+
+                    .history-button {
+                        background: #f5f5f5;
+                        border: none;
+                        border-radius: 50px;
+                        padding: 8px 16px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-size: 0.9em;
+                        color: #333;
+                    }
+
+                    .history-button:hover {
+                        background: #000;
+                        color: white;
+                        transform: translateY(-2px);
+                    }
+
+                    .mood-entry {
+                        background: #f9f9f9;
+                        padding: 15px;
+                        border-radius: 8px;
+                    }
+
+                    .selected-scenario {
+                        color: #666;
+                        margin: 0 5px;
+                    }
+
+                    .song-ratings {
+                        margin-top: 10px;
+                        padding-top: 10px;
+                        border-top: 1px solid #eee;
+                    }
+                `;
+                document.head.appendChild(styleSheet);
+
+                // 修改音樂推薦頁面的顯示邏輯
+                function updateMusicRecommendations() {
+                    if (!lastMoodRecord) return;
+
+                    // 設置預設語言為"全部"
+                    selectedLanguage = selectedLanguage || '全部';
+
+                    let filteredSongs = songDatabase.filter(song => {
+                        if (selectedLanguage !== '全部' && song.語言 !== selectedLanguage) {
+                            return false;
+                        }
+                        const songMoods = processMoodString(song.情緒);
+                        return songMoods.includes(lastMoodRecord.mood);
+                    });
+
+                    filteredSongs.sort((a, b) => {
+                        const viewsA = parseInt(a.點閱率) || 0;
+                        const viewsB = parseInt(b.點閱率) || 0;
+                        return viewsB - viewsA;
+                    });
+
+                    // 清空現有內容
+                    musicRecommendations.innerHTML = '';
+
+                    // 添加心情記錄顯示
+                    const moodRecordHtml = `
                         <div class="current-mood-record">
                             <div class="record-header">
                                 <h3>本次心情記錄</h3>
                             </div>
                             <div class="mood-entry">
                                 <p>
-                                    <strong>${latestMood.mood}</strong>
-                                    ${latestMood.scenarios && latestMood.scenarios.length > 0
-                            ? `<span class="selected-scenario">| ${latestMood.scenarios.join(', ')}</span>`
+                                    <strong>${lastMoodRecord.mood}</strong>
+                                    ${lastMoodRecord.scenarios && lastMoodRecord.scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${lastMoodRecord.scenarios.join(', ')}</span>`
                             : ''}
-                                    <span style="color: #666;">| ${latestMood.date}</span>
+                                    <span style="color: #666;">| ${lastMoodRecord.date}</span>
                                 </p>
-                                <p>${latestMood.note}</p>
-                                ${latestMood.songRatings && latestMood.songRatings.length > 0 ? `
+                                <p>${lastMoodRecord.note}</p>
+                                ${lastMoodRecord.songRatings && lastMoodRecord.songRatings.length > 0 ? `
                                     <div class="song-ratings">
                                         <p><strong>歌曲評分：</strong></p>
                                         <div class="rating-list">
-                                        ${latestMood.songRatings.map(rating => `
+                                        ${lastMoodRecord.songRatings.map(rating => `
                                                 <div class="rating-item">
                                                     <span class="song-name">${rating.songName}</span>
                                                     <span class="rating-stars">
@@ -2557,116 +2688,349 @@
                                     <span class="btn-icon">✓</span>
                                     完成紀錄
                                 </button>
+                    </div>
+                    </div>
+                `;
+
+                    // 添加推薦歌曲列表
+                    const songsHtml = filteredSongs.length > 0
+                        ? `
+                            <div class="recommendations-header">
+                                <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
+                                <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
+                               </div>
+                               ${filteredSongs.map(song => `
+                                <div class="song-detail-card">
+                                    <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
+                                    <div class="song-info">
+                                        <h3 class="song-title">${song.歌名}</h3>
+                                        <p class="song-artist">${song.歌手}</p>
+                                        <div class="song-stats">
+                                            <div class="stat-item">
+                                                <span>語言:</span>
+                                                <strong>${song.語言}</strong>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span>點閱率:</span>
+                                                <strong>${formatViews(song.點閱率)}</strong>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span>情緒:</span>
+                                                <strong>${song.情緒}</strong>
+                                            </div>
+                                            ${song.情境 ? `
+                                            <div class="stat-item">
+                                                <span>情境:</span>
+                                                <strong>${song.情境}</strong>
+                                            </div>
+                                            ` : ''}
+                                        </div>
+                                        ${generateRatingSystem(song.歌名)}
+                                        <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
+                                            在 YouTube 上播放
+                                        </a>
+                                    </div>
+                                </div>
+                            `).join('')}`
+                        : `<p>沒有找到符合條件的歌曲</p>`;
+
+                    // 更新頁面內容
+                    musicRecommendations.innerHTML = moodRecordHtml + songsHtml;
+
+                    // 重新綁定評分事件
+                    bindRatingEvents();
+
+                    // 重新綁定完成紀錄按鈕事件
+                    const finishRecordBtn = document.querySelector('.finish-record-btn');
+                    if (finishRecordBtn) {
+                        finishRecordBtn.addEventListener('click', () => {
+                            // 切換到心情記錄頁面
+                            const moodPageButton = document.querySelector('[data-page="page-mood"]');
+                            if (moodPageButton) {
+                                moodPageButton.click();
+
+                                // 確保歷史記錄是最新的
+                                updateHistory();
+
+                                // 滾動到歷史記錄區域
+                                const historyContainer = document.getElementById('history-container');
+                                if (historyContainer) {
+                                    setTimeout(() => {
+                                        historyContainer.scrollIntoView({ behavior: 'smooth' });
+                                    }, 100);
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // 格式化點閱率顯示
+                function formatViews(views) {
+                    if (!views) return 'N/A';
+                    const num = parseInt(views);
+                    if (isNaN(num)) return views;
+                    if (num >= 100000000) {
+                        return (num / 100000000).toFixed(1) + '億';
+                    } else if (num >= 10000) {
+                        return (num / 10000).toFixed(1) + '萬';
+                    }
+                    return num.toLocaleString();
+                }
+
+                // Excel 檔案上傳處理
+                excelFileInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        uploadStatus.textContent = '正在處理檔案...';
+                        try {
+                            const data = await file.arrayBuffer();
+                            const workbook = XLSX.read(data);
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            songDatabase = XLSX.utils.sheet_to_json(worksheet);
+
+                            const moods = [...new Set(songDatabase.map(song => song.情緒))];
+
+                            if (moods.length === 0) {
+                                throw new Error('Excel 檔案中沒有找到情緒欄位');
+                            }
+
+                            generateMoodCards(moods);
+                            generateScenarioButtons();
+
+                            uploadStatus.textContent = '音樂資料庫已更新！';
+                            uploadStatus.style.color = '#4CAF50';
+
+                            // 顯示登入頁面
+                            setTimeout(() => {
+                                Object.values(pages).forEach(page => page.classList.remove('active'));
+                                document.getElementById('login-page').classList.add('active');
+                            }, 1000);
+                        } catch (error) {
+                            uploadStatus.textContent = '處理檔案時發生錯誤：' + error.message;
+                            uploadStatus.style.color = '#f44336';
+                            console.error('Error processing Excel file:', error);
+                        }
+                    }
+                });
+
+                function processMoodString(moodString) {
+                    // 移除所有空白字符
+                    moodString = moodString.trim();
+                    // 分割字串（支援多種分隔符號）
+                    return moodString.split(/[、，,;；]/g)
+                        .map(mood => mood.trim())
+                        .filter(mood => mood.length > 0);
+                }
+
+                function getRelatedScenarios(mood) {
+                    return [...new Set(
+                        songDatabase
+                            .filter(song => {
+                                // 處理歌曲的情緒字串
+                                const songMoods = processMoodString(song.情緒);
+                                // 只有當歌曲的情緒包含所選情緒時才返回其情境
+                                return songMoods.includes(mood) && song.情境;
+                            })
+                            .flatMap(song => processMoodString(song.情境))
+                    )];
+                }
+
+                function updateScenarioSection(mood) {
+                    const scenarios = getRelatedScenarios(mood);
+                    if (scenarios.length > 0) {
+                        scenarioGrid.innerHTML = scenarios.map(scenario => `
+                            <div class="scenario-tag" data-scenario="${scenario}">
+                                ${scenario}
+                            </div>
+                        `).join('');
+
+                        // 綁定情境標籤點擊事件
+                        document.querySelectorAll('.scenario-tag').forEach(tag => {
+                            tag.addEventListener('click', () => {
+                                const scenario = tag.dataset.scenario;
+                                if (selectedScenarios.has(scenario)) {
+                                    // 如果已經選中，則取消選中
+                                    selectedScenarios.delete(scenario);
+                                    tag.classList.remove('selected');
+                                } else {
+                                    // 如果未選中，則選中
+                                    selectedScenarios.add(scenario);
+                                    tag.classList.add('selected');
+                                }
+                                updateSelectedMoodDisplay();
+                            });
+                        });
+
+                        scenarioSection.style.display = 'block';
+                    } else {
+                        scenarioSection.style.display = 'none';
+                    }
+                }
+
+                // 更新選中情境顯示
+                function updateSelectedMoodDisplay() {
+                    if (selectedMood) {
+                        const emoji = getEmoticonForMood(selectedMood);
+                        const scenarios = Array.from(selectedScenarios);
+
+                        const moodDisplay = document.querySelector('.selected-mood-display');
+                        if (moodDisplay) {
+                            moodDisplay.innerHTML = `
+                                <div class="selected-mood-emoji">${emoji}</div>
+                                <div class="selected-mood-text">${selectedMood}</div>
+                                ${scenarios.length > 0 ?
+                                    `<div class="selected-scenario">情境: ${scenarios.join('、')}</div>`
+                                    : ''}
+                            `;
+                            moodDisplay.style.display = 'flex';
+                        }
+
+                        // 更新所有情境按鈕的選中狀態
+                        document.querySelectorAll('.scenario-tag').forEach(tag => {
+                            const scenario = tag.dataset.scenario;
+                            if (selectedScenarios.has(scenario)) {
+                                tag.classList.add('selected');
+                            } else {
+                                tag.classList.remove('selected');
+                            }
+                        });
+                    } else {
+                        const moodDisplay = document.querySelector('.selected-mood-display');
+                        if (moodDisplay) {
+                            moodDisplay.style.display = 'none';
+                        }
+                    }
+                }
+
+                // 智能情緒符號配對函數
+                function getEmoticonForMood(mood) {
+                    // 如果有直接對應的符號，直接返回
+                    if (moodEmojis[mood]) {
+                        return moodEmojis[mood];
+                    }
+
+                    // 關鍵字對應規則
+                    const moodRules = {
+                        '開心|快樂|喜悅|愉悅|幸福': ['🌟', '✨', '🌸', '💝', '💫'],
+                        '悲傷|難過|痛苦|遺憾|失望': ['💧', '💔', '🌧️', '🥀', '🍂'],
+                        '憤怒|生氣|煩躁|惱怒': ['🔥', '⚡', '💢'],
+                        '平靜|安詳|寧靜|祥和': ['🌊', '🕊️', '☁️', '🍃'],
+                        '愛|戀|情': ['💝', '💕', '💗'],
+                        '期待|希望|夢想': ['🌈', '⭐', '✨'],
+                        '疲倦|累|困': ['🌙', '💫', '🍂']
+                    };
+
+                    // 尋找匹配的規則
+                    for (const [pattern, emoticons] of Object.entries(moodRules)) {
+                        if (new RegExp(pattern).test(mood)) {
+                            // 從符合的符號中隨機選擇一個
+                            return emoticons[Math.floor(Math.random() * emoticons.length)];
+                        }
+                    }
+
+                    // 如果沒有匹配的規則，返回預設符號
+                    return '💫';
+                }
+
+                submitBtn.addEventListener('click', () => {
+                    if (!selectedMood) {
+                        alert('請選擇一個心情！');
+                        return;
+                    }
+
+                    const note = noteInput.value;
+                    const date = new Date().toLocaleString('zh-TW');
+                    const nickname = localStorage.getItem('userNickname') || '匿名用戶';
+                    const moodEntry = {
+                        mood: selectedMood,
+                        scenarios: Array.from(selectedScenarios),
+                        note,
+                        date,
+                        nickname,
+                        songRatings: []
+                    };
+
+                    const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                    moodHistory.unshift(moodEntry);
+                    localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
+
+                    // 清除之前的評分記錄
+                    localStorage.removeItem('songRatings');
+
+                    // 重置表單
+                    noteInput.value = '';
+                    selectedMood = '';
+                    selectedScenarios.clear();
+                    document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
+                    document.querySelectorAll('.scenario-tag').forEach(tag => tag.classList.remove('selected'));
+
+                    // 更新歷史記錄
+                    updateHistory();
+                    lastMoodRecord = moodEntry;
+
+                    // 切換到音樂推薦頁面並強制重新整理
+                    const musicPageButton = document.querySelector('[data-page="page-music"]');
+                    if (musicPageButton) {
+                        musicPageButton.click();
+                        setTimeout(() => {
+                            updateMusicRecommendations();
+                        }, 100);
+                    }
+                });
+
+                function updateHistory(filterNickname = null) {
+                    const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                    let filteredHistory = moodHistory;
+
+                    if (filterNickname) {
+                        filteredHistory = moodHistory.filter(entry => entry.nickname === filterNickname);
+                    }
+
+                    // 更新歷史記錄標題區域
+                    const historyHeaderHtml = `
+                        <div class="history-header">
+                            <h2 class="history-title">歷史記錄</h2>
+                            <div class="user-search">
+                                <input type="text" class="search-input" placeholder="搜尋使用者暱稱...">
+                                <button class="search-btn">查詢</button>
+                                <div class="search-results"></div>
                             </div>
                         </div>
+                        ${filterNickname ? `
+                            <div class="filtered-records">
+                                <div class="filtered-header">
+                                    <span class="filtered-title">顯示 ${filterNickname} 的記錄</span>
+                                    <button class="clear-filter">清除篩選</button>
+                                </div>
+                            </div>
+                        ` : ''}
                     `;
-                }
-                return '';
-            }
 
-            // 更新音樂推薦頁面的樣式
-            const styleSheet = document.createElement('style');
-            styleSheet.textContent = `
-                .current-mood-record {
-                    margin: 30px 0;
-                    padding: 20px;
-                    background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-                }
-
-                .record-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 15px;
-                }
-
-                .record-header h3 {
-                    margin: 0;
-                    color: #333;
-                }
-
-                .history-button {
-                    background: #f5f5f5;
-                    border: none;
-                    border-radius: 50px;
-                    padding: 8px 16px;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    font-size: 0.9em;
-                    color: #333;
-                }
-
-                .history-button:hover {
-                    background: #000;
-                    color: white;
-                    transform: translateY(-2px);
-                }
-
-                .mood-entry {
-                    background: #f9f9f9;
-                    padding: 15px;
-                    border-radius: 8px;
-                }
-
-                .selected-scenario {
-                    color: #666;
-                    margin: 0 5px;
-                }
-
-                .song-ratings {
-                    margin-top: 10px;
-                    padding-top: 10px;
-                    border-top: 1px solid #eee;
-                }
-            `;
-            document.head.appendChild(styleSheet);
-
-            // 修改音樂推薦頁面的顯示邏輯
-            function updateMusicRecommendations() {
-                if (!lastMoodRecord) return;
-
-                // 設置預設語言為"全部"
-                selectedLanguage = selectedLanguage || '全部';
-
-                let filteredSongs = songDatabase.filter(song => {
-                    if (selectedLanguage !== '全部' && song.語言 !== selectedLanguage) {
-                        return false;
-                    }
-                    const songMoods = processMoodString(song.情緒);
-                    return songMoods.includes(lastMoodRecord.mood);
-                });
-
-                filteredSongs.sort((a, b) => {
-                    const viewsA = parseInt(a.點閱率) || 0;
-                    const viewsB = parseInt(b.點閱率) || 0;
-                    return viewsB - viewsA;
-                });
-
-                // 清空現有內容
-                musicRecommendations.innerHTML = '';
-
-                // 添加心情記錄顯示
-                const moodRecordHtml = `
-                    <div class="current-mood-record">
-                        <div class="record-header">
-                            <h3>本次心情記錄</h3>
-                        </div>
+                    // 更新歷史記錄內容
+                    historyContainer.innerHTML = historyHeaderHtml + filteredHistory.map(entry => `
                         <div class="mood-entry">
+                            <div class="entry-header">
+                                ${entry.nickname && entry.nickname !== '匿名用戶' ?
+                            `<div class="record-user">
+                                        <div class="user-avatar-small">${entry.nickname.charAt(0)}</div>
+                                        <span class="user-name-small">${entry.nickname}</span>
+                                    </div>` :
+                            ''
+                        }
+                                <div class="entry-time">${entry.date}</div>
+                            </div>
                             <p>
-                                <strong>${lastMoodRecord.mood}</strong>
-                                ${lastMoodRecord.scenarios && lastMoodRecord.scenarios.length > 0
-                        ? `<span class="selected-scenario">| ${lastMoodRecord.scenarios.join(', ')}</span>`
-                        : ''}
-                                <span style="color: #666;">| ${lastMoodRecord.date}</span>
+                                <strong>${entry.mood}</strong>
+                                ${entry.scenarios && entry.scenarios.length > 0
+                            ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
+                            : ''}
                             </p>
-                            <p>${lastMoodRecord.note}</p>
-                            ${lastMoodRecord.songRatings && lastMoodRecord.songRatings.length > 0 ? `
+                            <p>${entry.note}</p>
+                            ${entry.songRatings && entry.songRatings.length > 0 ? `
                                 <div class="song-ratings">
                                     <p><strong>歌曲評分：</strong></p>
                                     <div class="rating-list">
-                                    ${lastMoodRecord.songRatings.map(rating => `
+                                    ${entry.songRatings.map(rating => `
                                             <div class="rating-item">
                                                 <span class="song-name">${rating.songName}</span>
                                                 <span class="rating-stars">
@@ -2679,644 +3043,284 @@
                                 </div>
                             ` : ''}
                         </div>
-                        <div class="finish-record-sticky">
-                            <button class="finish-record-btn">
-                                <span class="btn-icon">✓</span>
-                                完成紀錄
-                            </button>
-                    </div>
-                    </div>
-                `;
-
-                // 添加推薦歌曲列表
-                const songsHtml = filteredSongs.length > 0
-                    ? `
-                        <div class="recommendations-header">
-                            <h3>符合 "${lastMoodRecord.mood}" 心情的${selectedLanguage === '全部' ? '' : selectedLanguage}歌曲：</h3>
-                            <p class="mood-match-info">顯示所有情緒包含「${lastMoodRecord.mood}」的歌曲</p>
-                           </div>
-                           ${filteredSongs.map(song => `
-                            <div class="song-detail-card">
-                                <img src="${song.封面圖片 || 'default-cover.jpg'}" alt="${song.歌名}" class="song-cover-large">
-                                <div class="song-info">
-                                    <h3 class="song-title">${song.歌名}</h3>
-                                    <p class="song-artist">${song.歌手}</p>
-                                    <div class="song-stats">
-                                        <div class="stat-item">
-                                            <span>語言:</span>
-                                            <strong>${song.語言}</strong>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span>點閱率:</span>
-                                            <strong>${formatViews(song.點閱率)}</strong>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span>情緒:</span>
-                                            <strong>${song.情緒}</strong>
-                                        </div>
-                                        ${song.情境 ? `
-                                        <div class="stat-item">
-                                            <span>情境:</span>
-                                            <strong>${song.情境}</strong>
-                                        </div>
-                                        ` : ''}
-                                    </div>
-                                    ${generateRatingSystem(song.歌名)}
-                                    <a href="${song.YouTube連結}" target="_blank" class="youtube-link">
-                                        在 YouTube 上播放
-                                    </a>
-                                </div>
-                            </div>
-                        `).join('')}`
-                    : `<p>沒有找到符合條件的歌曲</p>`;
-
-                // 更新頁面內容
-                musicRecommendations.innerHTML = moodRecordHtml + songsHtml;
-
-                // 重新綁定評分事件
-                bindRatingEvents();
-
-                // 重新綁定完成紀錄按鈕事件
-                const finishRecordBtn = document.querySelector('.finish-record-btn');
-                if (finishRecordBtn) {
-                    finishRecordBtn.addEventListener('click', () => {
-                        // 切換到心情記錄頁面
-                        const moodPageButton = document.querySelector('[data-page="page-mood"]');
-                        if (moodPageButton) {
-                            moodPageButton.click();
-
-                            // 確保歷史記錄是最新的
-                            updateHistory();
-
-                            // 滾動到歷史記錄區域
-                            const historyContainer = document.getElementById('history-container');
-                            if (historyContainer) {
-                                setTimeout(() => {
-                                    historyContainer.scrollIntoView({ behavior: 'smooth' });
-                                }, 100);
-                            }
-                        }
-                    });
-                }
-            }
-
-            // 格式化點閱率顯示
-            function formatViews(views) {
-                if (!views) return 'N/A';
-                const num = parseInt(views);
-                if (isNaN(num)) return views;
-                if (num >= 100000000) {
-                    return (num / 100000000).toFixed(1) + '億';
-                } else if (num >= 10000) {
-                    return (num / 10000).toFixed(1) + '萬';
-                }
-                return num.toLocaleString();
-            }
-
-            // Excel 檔案上傳處理
-            excelFileInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    uploadStatus.textContent = '正在處理檔案...';
-                    try {
-                        const data = await file.arrayBuffer();
-                        const workbook = XLSX.read(data);
-                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        songDatabase = XLSX.utils.sheet_to_json(worksheet);
-
-                        const moods = [...new Set(songDatabase.map(song => song.情緒))];
-
-                        if (moods.length === 0) {
-                            throw new Error('Excel 檔案中沒有找到情緒欄位');
-                        }
-
-                        generateMoodCards(moods);
-                        generateScenarioButtons();
-
-                        uploadStatus.textContent = '音樂資料庫已更新！';
-                        uploadStatus.style.color = '#4CAF50';
-
-                        // 顯示登入頁面
-                        setTimeout(() => {
-                            Object.values(pages).forEach(page => page.classList.remove('active'));
-                            document.getElementById('login-page').classList.add('active');
-                        }, 1000);
-                    } catch (error) {
-                        uploadStatus.textContent = '處理檔案時發生錯誤：' + error.message;
-                        uploadStatus.style.color = '#f44336';
-                        console.error('Error processing Excel file:', error);
-                    }
-                }
-            });
-
-            function processMoodString(moodString) {
-                // 移除所有空白字符
-                moodString = moodString.trim();
-                // 分割字串（支援多種分隔符號）
-                return moodString.split(/[、，,;；]/g)
-                    .map(mood => mood.trim())
-                    .filter(mood => mood.length > 0);
-            }
-
-            function getRelatedScenarios(mood) {
-                return [...new Set(
-                    songDatabase
-                        .filter(song => {
-                            // 處理歌曲的情緒字串
-                            const songMoods = processMoodString(song.情緒);
-                            // 只有當歌曲的情緒包含所選情緒時才返回其情境
-                            return songMoods.includes(mood) && song.情境;
-                        })
-                        .flatMap(song => processMoodString(song.情境))
-                )];
-            }
-
-            function updateScenarioSection(mood) {
-                const scenarios = getRelatedScenarios(mood);
-                if (scenarios.length > 0) {
-                    scenarioGrid.innerHTML = scenarios.map(scenario => `
-                        <div class="scenario-tag" data-scenario="${scenario}">
-                            ${scenario}
-                        </div>
                     `).join('');
 
-                    // 綁定情境標籤點擊事件
-                    document.querySelectorAll('.scenario-tag').forEach(tag => {
-                        tag.addEventListener('click', () => {
-                            const scenario = tag.dataset.scenario;
-                            if (selectedScenarios.has(scenario)) {
-                                // 如果已經選中，則取消選中
-                                selectedScenarios.delete(scenario);
-                                tag.classList.remove('selected');
-                            } else {
-                                // 如果未選中，則選中
-                                selectedScenarios.add(scenario);
-                                tag.classList.add('selected');
-                            }
-                            updateSelectedMoodDisplay();
-                        });
-                    });
-
-                    scenarioSection.style.display = 'block';
-                } else {
-                    scenarioSection.style.display = 'none';
-                }
-            }
-
-            // 更新選中情境顯示
-            function updateSelectedMoodDisplay() {
-                if (selectedMood) {
-                    const emoji = getEmoticonForMood(selectedMood);
-                    const scenarios = Array.from(selectedScenarios);
-
-                    const moodDisplay = document.querySelector('.selected-mood-display');
-                    if (moodDisplay) {
-                        moodDisplay.innerHTML = `
-                            <div class="selected-mood-emoji">${emoji}</div>
-                            <div class="selected-mood-text">${selectedMood}</div>
-                            ${scenarios.length > 0 ?
-                                `<div class="selected-scenario">情境: ${scenarios.join('、')}</div>`
-                                : ''}
-                        `;
-                        moodDisplay.style.display = 'flex';
-                    }
-
-                    // 更新所有情境按鈕的選中狀態
-                    document.querySelectorAll('.scenario-tag').forEach(tag => {
-                        const scenario = tag.dataset.scenario;
-                        if (selectedScenarios.has(scenario)) {
-                            tag.classList.add('selected');
-                        } else {
-                            tag.classList.remove('selected');
-                        }
-                    });
-                } else {
-                    const moodDisplay = document.querySelector('.selected-mood-display');
-                    if (moodDisplay) {
-                        moodDisplay.style.display = 'none';
-                    }
-                }
-            }
-
-            // 智能情緒符號配對函數
-            function getEmoticonForMood(mood) {
-                // 如果有直接對應的符號，直接返回
-                if (moodEmojis[mood]) {
-                    return moodEmojis[mood];
-                }
-
-                // 關鍵字對應規則
-                const moodRules = {
-                    '開心|快樂|喜悅|愉悅|幸福': ['🌟', '✨', '🌸', '💝', '💫'],
-                    '悲傷|難過|痛苦|遺憾|失望': ['💧', '💔', '🌧️', '🥀', '🍂'],
-                    '憤怒|生氣|煩躁|惱怒': ['🔥', '⚡', '💢'],
-                    '平靜|安詳|寧靜|祥和': ['🌊', '🕊️', '☁️', '🍃'],
-                    '愛|戀|情': ['💝', '💕', '💗'],
-                    '期待|希望|夢想': ['🌈', '⭐', '✨'],
-                    '疲倦|累|困': ['🌙', '💫', '🍂']
-                };
-
-                // 尋找匹配的規則
-                for (const [pattern, emoticons] of Object.entries(moodRules)) {
-                    if (new RegExp(pattern).test(mood)) {
-                        // 從符合的符號中隨機選擇一個
-                        return emoticons[Math.floor(Math.random() * emoticons.length)];
-                    }
-                }
-
-                // 如果沒有匹配的規則，返回預設符號
-                return '💫';
-            }
-
-            submitBtn.addEventListener('click', () => {
-                if (!selectedMood) {
-                    alert('請選擇一個心情！');
-                    return;
-                }
-
-                const note = noteInput.value;
-                const date = new Date().toLocaleString('zh-TW');
-                const nickname = localStorage.getItem('userNickname') || '匿名用戶';
-                const moodEntry = {
-                    mood: selectedMood,
-                    scenarios: Array.from(selectedScenarios),
-                    note,
-                    date,
-                    nickname,
-                    songRatings: []
-                };
-
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-                moodHistory.unshift(moodEntry);
-                localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
-
-                // 清除之前的評分記錄
-                localStorage.removeItem('songRatings');
-
-                // 重置表單
-                noteInput.value = '';
-                selectedMood = '';
-                selectedScenarios.clear();
-                document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
-                document.querySelectorAll('.scenario-tag').forEach(tag => tag.classList.remove('selected'));
-
-                // 更新歷史記錄
-                updateHistory();
-                lastMoodRecord = moodEntry;
-
-                // 切換到音樂推薦頁面並強制重新整理
-                const musicPageButton = document.querySelector('[data-page="page-music"]');
-                if (musicPageButton) {
-                    musicPageButton.click();
-                    setTimeout(() => {
-                        updateMusicRecommendations();
-                    }, 100);
-                }
-            });
-
-            function updateHistory(filterNickname = null) {
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-                let filteredHistory = moodHistory;
-
-                if (filterNickname) {
-                    filteredHistory = moodHistory.filter(entry => entry.nickname === filterNickname);
-                }
-
-                // 更新歷史記錄標題區域
-                const historyHeaderHtml = `
-                    <div class="history-header">
-                        <h2 class="history-title">歷史記錄</h2>
-                        <div class="user-search">
-                            <input type="text" class="search-input" placeholder="搜尋使用者暱稱...">
-                            <button class="search-btn">查詢</button>
-                            <div class="search-results"></div>
+                    // 添加清空記錄按鈕
+                    historyContainer.innerHTML += `
+                        <div class="clear-history-section">
+                            <button class="clear-history-btn">
+                                <span class="btn-icon">🗑️</span>
+                                清空所有記錄
+                            </button>
                         </div>
-                    </div>
-                    ${filterNickname ? `
-                        <div class="filtered-records">
-                            <div class="filtered-header">
-                                <span class="filtered-title">顯示 ${filterNickname} 的記錄</span>
-                                <button class="clear-filter">清除篩選</button>
+                        <div class="password-dialog">
+                            <div class="password-title">請輸入管理員密碼</div>
+                            <input type="password" class="password-input" placeholder="輸入密碼" maxlength="6">
+                            <div class="error-message">密碼錯誤，請重試</div>
+                            <div class="password-buttons">
+                                <button class="password-btn confirm-password">確認</button>
+                                <button class="password-btn cancel-password">取消</button>
                             </div>
                         </div>
-                    ` : ''}
-                `;
+                    `;
 
-                // 更新歷史記錄內容
-                historyContainer.innerHTML = historyHeaderHtml + filteredHistory.map(entry => `
-                    <div class="mood-entry">
-                        <div class="entry-header">
-                            ${entry.nickname && entry.nickname !== '匿名用戶' ?
-                        `<div class="record-user">
-                                    <div class="user-avatar-small">${entry.nickname.charAt(0)}</div>
-                                    <span class="user-name-small">${entry.nickname}</span>
-                                </div>` :
-                        ''
+                    // 綁定清空記錄按鈕事件
+                    bindClearHistoryEvents();
+
+                    // 綁定搜尋相關事件
+                    bindSearchEvents();
+                }
+
+                function bindSearchEvents() {
+                    const searchInput = document.querySelector('.search-input');
+                    const searchBtn = document.querySelector('.search-btn');
+                    const searchResults = document.querySelector('.search-results');
+                    const clearFilter = document.querySelector('.clear-filter');
+
+                    if (searchInput && searchBtn) {
+                        // 搜尋框輸入事件
+                        searchInput.addEventListener('input', () => {
+                            const query = searchInput.value.trim().toLowerCase();
+                            if (query.length > 0) {
+                                showSearchResults(query);
+                            } else {
+                                searchResults.classList.remove('show');
+                            }
+                        });
+
+                        // 搜尋按鈕點擊事件
+                        searchBtn.addEventListener('click', () => {
+                            const query = searchInput.value.trim();
+                            if (query) {
+                                filterHistoryByNickname(query);
+                            }
+                        });
+
+                        // 點擊其他地方關閉搜尋結果
+                        document.addEventListener('click', (e) => {
+                            if (!e.target.closest('.user-search')) {
+                                searchResults.classList.remove('show');
+                            }
+                        });
                     }
-                            <div class="entry-time">${entry.date}</div>
-                        </div>
-                        <p>
-                            <strong>${entry.mood}</strong>
-                            ${entry.scenarios && entry.scenarios.length > 0
-                        ? `<span class="selected-scenario">| ${entry.scenarios.join(', ')}</span>`
-                        : ''}
-                        </p>
-                        <p>${entry.note}</p>
-                        ${entry.songRatings && entry.songRatings.length > 0 ? `
-                            <div class="song-ratings">
-                                <p><strong>歌曲評分：</strong></p>
-                                <div class="rating-list">
-                                ${entry.songRatings.map(rating => `
-                                        <div class="rating-item">
-                                            <span class="song-name">${rating.songName}</span>
-                                            <span class="rating-stars">
-                                                ${Array(rating.rating).fill('★').join('')}
-                                                ${Array(5 - rating.rating).fill('☆').join('')}
-                                            </span>
-                                        </div>
-                                `).join('')}
+
+                    // 清除篩選按鈕事件
+                    if (clearFilter) {
+                        clearFilter.addEventListener('click', () => {
+                            updateHistory();
+                        });
+                    }
+                }
+
+                function showSearchResults(query) {
+                    const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+                    const uniqueNicknames = [...new Set(moodHistory
+                        .map(entry => entry.nickname)
+                        .filter(nickname => nickname && nickname.toLowerCase().includes(query))
+                    )];
+
+                    const searchResults = document.querySelector('.search-results');
+                    if (uniqueNicknames.length > 0) {
+                        searchResults.innerHTML = uniqueNicknames
+                            .map(nickname => `
+                                <div class="result-item" data-nickname="${nickname}">
+                                    ${nickname}
+                                </div>
+                            `).join('');
+
+                        // 綁定結果項點擊事件
+                        searchResults.querySelectorAll('.result-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                filterHistoryByNickname(item.dataset.nickname);
+                                searchResults.classList.remove('show');
+                            });
+                        });
+                    } else {
+                        searchResults.innerHTML = `
+                            <div class="no-results">
+                                沒有找到相關使用者
+                            </div>
+                        `;
+                    }
+
+                    searchResults.classList.add('show');
+                }
+
+                function filterHistoryByNickname(nickname) {
+                    updateHistory(nickname);
+                    document.querySelector('.search-input').value = nickname;
+                }
+
+                // 評分系統的反饋訊息
+                const ratingFeedback = {
+                    1: { text: "不太喜歡", emoji: "😕" },
+                    2: { text: "還可以", emoji: "🙂" },
+                    3: { text: "不錯", emoji: "😊" },
+                    4: { text: "很棒", emoji: "😄" },
+                    5: { text: "超愛", emoji: "🥰" }
+                };
+
+                function generateRatingSystem(songName) {
+                    const currentRating = getCurrentRating(songName);
+                    return `
+                        <div class="rating-container">
+                            <div class="rating-title">為這首歌評分</div>
+                            <div class="rating" data-song="${songName}">
+                                <div class="stars">
+                                    ${Array(5).fill().map((_, i) => `
+                                        <span class="star${i < currentRating ? ' active' : ''}" 
+                                              data-rating="${i + 1}">
+                                            ${i < currentRating ? '★' : '☆'}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                                <div class="rating-feedback${currentRating ? ' show' : ''}">
+                                    ${currentRating ? `${ratingFeedback[currentRating].emoji} ${ratingFeedback[currentRating].text}` : ''}
                                 </div>
                             </div>
-                        ` : ''}
-                    </div>
-                `).join('');
-
-                // 添加清空記錄按鈕
-                historyContainer.innerHTML += `
-                    <div class="clear-history-section">
-                        <button class="clear-history-btn">
-                            <span class="btn-icon">🗑️</span>
-                            清空所有記錄
-                        </button>
-                    </div>
-                    <div class="password-dialog">
-                        <div class="password-title">請輸入管理員密碼</div>
-                        <input type="password" class="password-input" placeholder="輸入密碼" maxlength="6">
-                        <div class="error-message">密碼錯誤，請重試</div>
-                        <div class="password-buttons">
-                            <button class="password-btn confirm-password">確認</button>
-                            <button class="password-btn cancel-password">取消</button>
-                        </div>
-                    </div>
-                `;
-
-                // 綁定清空記錄按鈕事件
-                bindClearHistoryEvents();
-
-                // 綁定搜尋相關事件
-                bindSearchEvents();
-            }
-
-            function bindSearchEvents() {
-                const searchInput = document.querySelector('.search-input');
-                const searchBtn = document.querySelector('.search-btn');
-                const searchResults = document.querySelector('.search-results');
-                const clearFilter = document.querySelector('.clear-filter');
-
-                if (searchInput && searchBtn) {
-                    // 搜尋框輸入事件
-                    searchInput.addEventListener('input', () => {
-                        const query = searchInput.value.trim().toLowerCase();
-                        if (query.length > 0) {
-                            showSearchResults(query);
-                        } else {
-                            searchResults.classList.remove('show');
-                        }
-                    });
-
-                    // 搜尋按鈕點擊事件
-                    searchBtn.addEventListener('click', () => {
-                        const query = searchInput.value.trim();
-                        if (query) {
-                            filterHistoryByNickname(query);
-                        }
-                    });
-
-                    // 點擊其他地方關閉搜尋結果
-                    document.addEventListener('click', (e) => {
-                        if (!e.target.closest('.user-search')) {
-                            searchResults.classList.remove('show');
-                        }
-                    });
-                }
-
-                // 清除篩選按鈕事件
-                if (clearFilter) {
-                    clearFilter.addEventListener('click', () => {
-                        updateHistory();
-                    });
-                }
-            }
-
-            function showSearchResults(query) {
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-                const uniqueNicknames = [...new Set(moodHistory
-                    .map(entry => entry.nickname)
-                    .filter(nickname => nickname && nickname.toLowerCase().includes(query))
-                )];
-
-                const searchResults = document.querySelector('.search-results');
-                if (uniqueNicknames.length > 0) {
-                    searchResults.innerHTML = uniqueNicknames
-                        .map(nickname => `
-                            <div class="result-item" data-nickname="${nickname}">
-                                ${nickname}
+                            <div class="rating-label">
+                                <span class="rating-emoji">🎵</span>
+                                <span>${currentRating ? '點擊星星修改評分' : '點擊星星進行評分'}</span>
                             </div>
-                        `).join('');
-
-                    // 綁定結果項點擊事件
-                    searchResults.querySelectorAll('.result-item').forEach(item => {
-                        item.addEventListener('click', () => {
-                            filterHistoryByNickname(item.dataset.nickname);
-                            searchResults.classList.remove('show');
-                        });
-                    });
-                } else {
-                    searchResults.innerHTML = `
-                        <div class="no-results">
-                            沒有找到相關使用者
+                            <div class="rating-messages"></div>
                         </div>
                     `;
                 }
 
-                searchResults.classList.add('show');
-            }
+                // 綁定評分事件
+                function bindRatingEvents() {
+                    document.querySelectorAll('.rating').forEach(ratingContainer => {
+                        const stars = ratingContainer.querySelectorAll('.star');
+                        const feedback = ratingContainer.querySelector('.rating-feedback');
+                        const messages = ratingContainer.querySelector('.rating-messages');
+                        const songName = ratingContainer.dataset.song;
 
-            function filterHistoryByNickname(nickname) {
-                updateHistory(nickname);
-                document.querySelector('.search-input').value = nickname;
-            }
+                        stars.forEach((star, index) => {
+                            // 懸浮效果
+                            star.addEventListener('mouseenter', () => {
+                                const rating = parseInt(star.dataset.rating);
+                                updateStarsDisplay(stars, rating);
+                                showRatingMessage(messages, rating);
+                            });
 
-            // 評分系統的反饋訊息
-            const ratingFeedback = {
-                1: { text: "不太喜歡", emoji: "😕" },
-                2: { text: "還可以", emoji: "🙂" },
-                3: { text: "不錯", emoji: "😊" },
-                4: { text: "很棒", emoji: "😄" },
-                5: { text: "超愛", emoji: "🥰" }
-            };
+                            // 點擊評分
+                            star.addEventListener('click', () => {
+                                const rating = parseInt(star.dataset.rating);
+                                stars.forEach(s => s.classList.remove('pulse'));
+                                star.classList.add('pulse');
 
-            function generateRatingSystem(songName) {
-                const currentRating = getCurrentRating(songName);
-                return `
-                    <div class="rating-container">
-                        <div class="rating-title">為這首歌評分</div>
-                        <div class="rating" data-song="${songName}">
-                            <div class="stars">
-                                ${Array(5).fill().map((_, i) => `
-                                    <span class="star${i < currentRating ? ' active' : ''}" 
-                                          data-rating="${i + 1}">
-                                        ${i < currentRating ? '★' : '☆'}
-                                    </span>
-                                `).join('')}
-                            </div>
-                            <div class="rating-feedback${currentRating ? ' show' : ''}">
-                                ${currentRating ? `${ratingFeedback[currentRating].emoji} ${ratingFeedback[currentRating].text}` : ''}
-                            </div>
-                        </div>
-                        <div class="rating-label">
-                            <span class="rating-emoji">🎵</span>
-                            <span>${currentRating ? '點擊星星修改評分' : '點擊星星進行評分'}</span>
-                        </div>
-                        <div class="rating-messages"></div>
-                    </div>
-                `;
-            }
+                                // 更新評分顯示
+                                updateStarsDisplay(stars, rating, true);
+                                updateRatingFeedback(feedback, rating);
 
-            // 綁定評分事件
-            function bindRatingEvents() {
-                document.querySelectorAll('.rating').forEach(ratingContainer => {
-                    const stars = ratingContainer.querySelectorAll('.star');
-                    const feedback = ratingContainer.querySelector('.rating-feedback');
-                    const messages = ratingContainer.querySelector('.rating-messages');
-                    const songName = ratingContainer.dataset.song;
+                                // 儲存評分
+                                saveRating(songName, rating);
+                            });
+                        });
 
+                        // 移出重置未確認的評分顯示
+                        ratingContainer.addEventListener('mouseleave', () => {
+                            const currentRating = getCurrentRating(songName);
+                            updateStarsDisplay(stars, currentRating);
+                            messages.classList.remove('show');
+                        });
+                    });
+                }
+
+                // 更新星星顯示
+                function updateStarsDisplay(stars, rating, permanent = false) {
                     stars.forEach((star, index) => {
-                        // 懸浮效果
-                        star.addEventListener('mouseenter', () => {
-                            const rating = parseInt(star.dataset.rating);
-                            updateStarsDisplay(stars, rating);
-                            showRatingMessage(messages, rating);
-                        });
-
-                        // 點擊評分
-                        star.addEventListener('click', () => {
-                            const rating = parseInt(star.dataset.rating);
-                            stars.forEach(s => s.classList.remove('pulse'));
-                            star.classList.add('pulse');
-
-                            // 更新評分顯示
-                            updateStarsDisplay(stars, rating, true);
-                            updateRatingFeedback(feedback, rating);
-
-                            // 儲存評分
-                            saveRating(songName, rating);
-                        });
+                        if (permanent) {
+                            star.classList.toggle('active', index < rating);
+                        }
+                        star.textContent = index < rating ? '★' : '☆';
                     });
+                }
 
-                    // 移出重置未確認的評分顯示
-                    ratingContainer.addEventListener('mouseleave', () => {
-                        const currentRating = getCurrentRating(songName);
-                        updateStarsDisplay(stars, currentRating);
-                        messages.classList.remove('show');
-                    });
-                });
-            }
+                // 顯示評分訊息
+                function showRatingMessage(messages, rating) {
+                    const feedback = ratingFeedback[rating];
+                    messages.textContent = `${feedback.emoji} ${feedback.text}`;
+                    messages.classList.add('show');
+                }
 
-            // 更新星星顯示
-            function updateStarsDisplay(stars, rating, permanent = false) {
-                stars.forEach((star, index) => {
-                    if (permanent) {
-                        star.classList.toggle('active', index < rating);
-                    }
-                    star.textContent = index < rating ? '★' : '☆';
-                });
-            }
+                // 更新評分反饋
+                function updateRatingFeedback(feedback, rating) {
+                    const { text, emoji } = ratingFeedback[rating];
+                    feedback.textContent = `${emoji} ${text}`;
+                    feedback.classList.add('show');
+                }
 
-            // 顯示評分訊息
-            function showRatingMessage(messages, rating) {
-                const feedback = ratingFeedback[rating];
-                messages.textContent = `${feedback.emoji} ${feedback.text}`;
-                messages.classList.add('show');
-            }
+                // 儲存評分
+                function saveRating(songName, rating) {
+                    const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
+                    ratings[songName] = {
+                        rating,
+                        date: new Date().toISOString()
+                    };
+                    localStorage.setItem('songRatings', JSON.stringify(ratings));
 
-            // 更新評分反饋
-            function updateRatingFeedback(feedback, rating) {
-                const { text, emoji } = ratingFeedback[rating];
-                feedback.textContent = `${emoji} ${text}`;
-                feedback.classList.add('show');
-            }
+                    // 更新心情記錄中的評分
+                    updateMoodRecordRating(songName, rating);
 
-            // 儲存評分
-            function saveRating(songName, rating) {
-                const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
-                ratings[songName] = {
-                    rating,
-                    date: new Date().toISOString()
-                };
-                localStorage.setItem('songRatings', JSON.stringify(ratings));
+                    // 檢查是否所有推薦的歌曲都已評分
+                    checkAllSongsRated();
+                }
+
+                // 獲取當前評分
+                function getCurrentRating(songName) {
+                    const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
+                    return ratings[songName]?.rating || 0;
+                }
 
                 // 更新心情記錄中的評分
-                updateMoodRecordRating(songName, rating);
+                function updateMoodRecordRating(songName, rating) {
+                    const moodHistory = JSON.parse(localStorage.getItem('moodHistory') || '[]');
+                    if (moodHistory.length > 0) {
+                        const latestMood = moodHistory[0];
+                        if (!latestMood.songRatings) {
+                            latestMood.songRatings = [];
+                        }
 
-                // 檢查是否所有推薦的歌曲都已評分
-                checkAllSongsRated();
-            }
+                        // 更新或添加評分
+                        const existingRating = latestMood.songRatings.find(r => r.songName === songName);
+                        if (existingRating) {
+                            existingRating.rating = rating;
+                        } else {
+                            latestMood.songRatings.push({ songName, rating });
+                        }
 
-            // 獲取當前評分
-            function getCurrentRating(songName) {
-                const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
-                return ratings[songName]?.rating || 0;
-            }
+                        localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
 
-            // 更新心情記錄中的評分
-            function updateMoodRecordRating(songName, rating) {
-                const moodHistory = JSON.parse(localStorage.getItem('moodHistory') || '[]');
-                if (moodHistory.length > 0) {
-                    const latestMood = moodHistory[0];
-                    if (!latestMood.songRatings) {
-                        latestMood.songRatings = [];
+                        // 更新本次心情記錄顯示
+                        updateCurrentMoodRecordDisplay(latestMood);
+
+                        // 更新歷史記錄顯示
+                        updateHistory();
                     }
-
-                    // 更新或添加評分
-                    const existingRating = latestMood.songRatings.find(r => r.songName === songName);
-                    if (existingRating) {
-                        existingRating.rating = rating;
-                    } else {
-                        latestMood.songRatings.push({ songName, rating });
-                    }
-
-                    localStorage.setItem('moodHistory', JSON.stringify(moodHistory));
-
-                    // 更新本次心情記錄顯示
-                    updateCurrentMoodRecordDisplay(latestMood);
-
-                    // 更新歷史記錄顯示
-                    updateHistory();
                 }
-            }
 
-            // 更新本次心情記錄顯示
-            function updateCurrentMoodRecordDisplay(moodRecord) {
-                const currentMoodRecord = document.querySelector('.current-mood-record');
-                if (currentMoodRecord) {
-                    currentMoodRecord.innerHTML = `
-                        <div class="record-header">
-                            <h3>本次心情記錄</h3>
-                            ${moodRecord.nickname && moodRecord.nickname !== '匿名用戶' ?
-                            `<div class="record-user">
+                // 更新本次心情記錄顯示
+                function updateCurrentMoodRecordDisplay(moodRecord) {
+                    const currentMoodRecord = document.querySelector('.current-mood-record');
+                    if (currentMoodRecord) {
+                        currentMoodRecord.innerHTML = `
+                            <div class="record-header">
+                                <h3>本次心情記錄</h3>
+                                ${moodRecord.nickname && moodRecord.nickname !== '匿名用戶' ?
+                                `<div class="record-user">
                                     <div class="user-avatar-small">${moodRecord.nickname.charAt(0)}</div>
                                     <span class="user-name-small">${moodRecord.nickname}</span>
                                 </div>` :
-                            ''
-                        }
+                                ''
+                            }
                         </div>
                         <div class="mood-entry">
                             <p>
                                 <strong>${moodRecord.mood}</strong>
                                 ${moodRecord.scenarios && moodRecord.scenarios.length > 0
-                            ? `<span class="selected-scenario">| ${moodRecord.scenarios.join(', ')}</span>`
-                            : ''}
+                                ? `<span class="selected-scenario">| ${moodRecord.scenarios.join(', ')}</span>`
+                                : ''}
                                 <span style="color: #666;">| ${moodRecord.date}</span>
                             </p>
                             <p>${moodRecord.note}</p>
@@ -3338,534 +3342,547 @@
                             ` : ''}
                         </div>
                     `;
-                }
-            }
-
-            // 初始化
-            updateHistory();
-            lastMoodRecord = getLastMoodRecord();
-
-            // 添加檢查所有歌曲是否都已評分的函數
-            function checkAllSongsRated() {
-                const recommendedSongs = document.querySelectorAll('.song-detail-card');
-                const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
-                let allRated = true;
-                let ratedCount = 0;
-
-                recommendedSongs.forEach(songCard => {
-                    const songTitle = songCard.querySelector('.song-title').textContent;
-                    if (ratings[songTitle] && ratings[songTitle].rating > 0) {
-                        ratedCount++;
-                    } else {
-                        allRated = false;
                     }
+                }
+
+                // 初始化
+                updateHistory();
+                lastMoodRecord = getLastMoodRecord();
+
+                // 添加檢查所有歌曲是否都已評分的函數
+                function checkAllSongsRated() {
+                    const recommendedSongs = document.querySelectorAll('.song-detail-card');
+                    const ratings = JSON.parse(localStorage.getItem('songRatings') || '{}');
+                    let allRated = true;
+                    let ratedCount = 0;
+
+                    recommendedSongs.forEach(songCard => {
+                        const songTitle = songCard.querySelector('.song-title').textContent;
+                        if (ratings[songTitle] && ratings[songTitle].rating > 0) {
+                            ratedCount++;
+                        } else {
+                            allRated = false;
+                        }
+                    });
+
+                    // 更新或顯示完成評分提示
+                    updateRatingProgress(ratedCount, recommendedSongs.length);
+                }
+
+                // 添加更新評分進度的函數
+                function updateRatingProgress(rated, total) {
+                    let progressContainer = document.querySelector('.rating-progress-container');
+
+                    if (!progressContainer) {
+                        // 如果容器不存在，創建一個新的
+                        progressContainer = document.createElement('div');
+                        progressContainer.className = 'rating-progress-container';
+                        const musicRecommendations = document.getElementById('music-recommendations');
+                        musicRecommendations.insertBefore(progressContainer, musicRecommendations.firstChild);
+                    }
+
+                    progressContainer.innerHTML = `
+                        <div class="rating-progress">
+                            <div class="progress-text">
+                                已評分 ${rated}/${total} 首歌曲
+                            </div>
+                            ${rated > 0 ? `
+                                <div class="finish-record-sticky">
+                                    <button class="finish-record-btn">
+                                        <span class="btn-icon">✓</span>
+                                        完成紀錄
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    // 綁定完成紀錄按鈕事件
+                    const finishRecordBtn = progressContainer.querySelector('.finish-record-btn');
+                    if (finishRecordBtn) {
+                        finishRecordBtn.addEventListener('click', () => {
+                            const moodPageButton = document.querySelector('[data-page="page-mood"]');
+                            if (moodPageButton) {
+                                moodPageButton.click();
+                                updateHistory();
+                                const historyContainer = document.getElementById('history-container');
+                                if (historyContainer) {
+                                    setTimeout(() => {
+                                        historyContainer.scrollIntoView({ behavior: 'smooth' });
+                                    }, 100);
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // 登入相關變數
+                const loginPage = document.getElementById('login-page');
+                const nicknameInput = document.getElementById('nickname');
+                const startBtn = document.getElementById('start-btn');
+                const anonymousBtn = document.getElementById('anonymous-btn');
+
+                // 監聽匿名使用按鈕
+                anonymousBtn.addEventListener('click', () => {
+                    showMainContent('匿名用戶');
                 });
 
-                // 更新或顯示完成評分提示
-                updateRatingProgress(ratedCount, recommendedSongs.length);
-            }
+                // 監聽開始使用按鈕
+                startBtn.addEventListener('click', () => {
+                    const nickname = nicknameInput.value.trim() || '匿名用戶';
+                    showMainContent(nickname);
+                });
 
-            // 添加更新評分進度的函數
-            function updateRatingProgress(rated, total) {
-                let progressContainer = document.querySelector('.rating-progress-container');
+                // 顯示主要內容
+                function showMainContent(nickname) {
+                    // 儲存用戶資訊
+                    localStorage.setItem('userNickname', nickname);
 
-                if (!progressContainer) {
-                    // 如果容器不存在，創建一個新的
-                    progressContainer = document.createElement('div');
-                    progressContainer.className = 'rating-progress-container';
-                    const musicRecommendations = document.getElementById('music-recommendations');
-                    musicRecommendations.insertBefore(progressContainer, musicRecommendations.firstChild);
+                    // 隱藏登入頁面
+                    loginPage.classList.remove('active');
+
+                    // 顯示心情記錄頁面
+                    document.getElementById('page-mood').classList.add('active');
+
+                    // 添加用戶資訊
+                    const userInfo = document.createElement('div');
+                    userInfo.className = 'user-info';
+                    userInfo.innerHTML = `
+                        <div class="user-avatar">${nickname === '匿名用戶' ? '?' : nickname.charAt(0)}</div>
+                        <span class="user-name">${nickname}</span>
+                        <div class="user-menu">
+                            <div class="menu-item logout">
+                                <span class="menu-icon">⭘</span>
+                                <span>登出</span>
+                            </div>
+                        </div>
+                    `;
+                    document.querySelector('.container').appendChild(userInfo);
+
+                    // 綁定用戶資訊點擊事件
+                    userInfo.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        userInfo.classList.toggle('menu-open');
+                    });
+
+                    // 綁定登出按鈕點擊事件
+                    const logoutBtn = userInfo.querySelector('.menu-item.logout');
+                    logoutBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm('確定要登出嗎？')) {
+                            exitApplication();
+                        }
+                    });
+
+                    // 點擊其他地方關閉選單
+                    document.addEventListener('click', () => {
+                        const userInfo = document.querySelector('.user-info');
+                        if (userInfo) {
+                            userInfo.classList.remove('menu-open');
+                        }
+                    });
                 }
 
-                progressContainer.innerHTML = `
-                    <div class="rating-progress">
-                        <div class="progress-text">
-                            已評分 ${rated}/${total} 首歌曲
-                        </div>
-                        ${rated > 0 ? `
-                            <div class="finish-record-sticky">
-                                <button class="finish-record-btn">
-                                    <span class="btn-icon">✓</span>
-                                    完成紀錄
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
+                function showConfirmationDialog() {
+                    // 創建對話框元素
+                    const overlay = document.createElement('div');
+                    overlay.className = 'dialog-overlay';
 
-                // 綁定完成紀錄按鈕事件
-                const finishRecordBtn = progressContainer.querySelector('.finish-record-btn');
-                if (finishRecordBtn) {
-                    finishRecordBtn.addEventListener('click', () => {
+                    const dialog = document.createElement('div');
+                    dialog.className = 'confirmation-dialog';
+
+                    let timeLeft = 10;
+
+                    dialog.innerHTML = `
+                        <div class="dialog-title">完成紀錄</div>
+                        <div class="dialog-message">是否要繼續使用？</div>
+                        <div class="timer">${timeLeft}</div>
+                        <div class="dialog-buttons">
+                            <button class="dialog-btn continue-btn">繼續使用</button>
+                            <button class="dialog-btn exit-btn">結束使用</button>
+                        </div>
+                    `;
+
+                    document.body.appendChild(overlay);
+                    document.body.appendChild(dialog);
+
+                    // 設置計時器
+                    const timer = dialog.querySelector('.timer');
+                    const countdown = setInterval(() => {
+                        timeLeft--;
+                        timer.textContent = timeLeft;
+
+                        if (timeLeft <= 0) {
+                            clearInterval(countdown);
+                            exitApplication();
+                        }
+                    }, 1000);
+
+                    // 綁定按鈕事件
+                    const continueBtn = dialog.querySelector('.continue-btn');
+                    const exitBtn = dialog.querySelector('.exit-btn');
+
+                    continueBtn.addEventListener('click', () => {
+                        clearInterval(countdown);
+                        overlay.remove();
+                        dialog.remove();
+                    });
+
+                    exitBtn.addEventListener('click', () => {
+                        clearInterval(countdown);
+                        exitApplication();
+                    });
+                }
+
+                function exitApplication() {
+                    // 清除當前頁面狀態
+                    selectedMood = '';
+                    selectedScenarios.clear();
+                    noteInput.value = '';
+                    document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
+                    document.querySelectorAll('.scenario-tag').forEach(tag => tag.classList.remove('selected'));
+
+                    // 移除所有對話框
+                    const overlay = document.querySelector('.dialog-overlay');
+                    const dialog = document.querySelector('.confirmation-dialog');
+                    if (overlay) overlay.remove();
+                    if (dialog) dialog.remove();
+
+                    // 清除歷史通知
+                    const notice = document.querySelector('.history-notice');
+                    if (notice) notice.remove();
+
+                    // 切換到登入頁面
+                    Object.values(pages).forEach(page => page.classList.remove('active'));
+                    document.getElementById('login-page').classList.add('active');
+
+                    // 移除用戶資訊顯示
+                    const userInfo = document.querySelector('.user-info');
+                    if (userInfo) userInfo.remove();
+
+                    // 清空暱稱輸入框
+                    const nicknameInput = document.getElementById('nickname');
+                    if (nicknameInput) {
+                        nicknameInput.value = '';
+                    }
+
+                    // 重置登入頁面狀態
+                    const startBtn = document.getElementById('start-btn');
+                    if (startBtn) {
+                        startBtn.classList.remove('active');
+                    }
+
+                    // 添加歡迎回來的提示
+                    showWelcomeBackMessage();
+                }
+
+                function showWelcomeBackMessage() {
+                    const welcomeTitle = document.querySelector('.welcome-title');
+                    if (welcomeTitle) {
+                        welcomeTitle.textContent = '歡迎回來';
+
+                        // 添加提示文字
+                        let hintText = document.querySelector('.login-hint');
+                        if (!hintText) {
+                            hintText = document.createElement('p');
+                            hintText.className = 'login-hint';
+                            welcomeTitle.insertAdjacentElement('afterend', hintText);
+                        }
+                        hintText.textContent = '請輸入新的暱稱或選擇匿名使用';
+                    }
+                }
+
+                // 修改完成紀錄按鈕的點擊事件
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('finish-record-btn')) {
+                        // 切換到心情記錄頁面
                         const moodPageButton = document.querySelector('[data-page="page-mood"]');
                         if (moodPageButton) {
                             moodPageButton.click();
+
+                            // 確保歷史記錄是最新的
                             updateHistory();
+
+                            // 滾動到歷史記錄區域
                             const historyContainer = document.getElementById('history-container');
                             if (historyContainer) {
                                 setTimeout(() => {
                                     historyContainer.scrollIntoView({ behavior: 'smooth' });
+                                    // 顯示歷史記錄查看通知
+                                    showHistoryNotice();
                                 }, 100);
                             }
                         }
-                    });
-                }
-            }
-
-            // 登入相關變數
-            const loginPage = document.getElementById('login-page');
-            const nicknameInput = document.getElementById('nickname');
-            const startBtn = document.getElementById('start-btn');
-            const anonymousBtn = document.getElementById('anonymous-btn');
-
-            // 監聽匿名使用按鈕
-            anonymousBtn.addEventListener('click', () => {
-                showMainContent('匿名用戶');
-            });
-
-            // 監聽開始使用按鈕
-            startBtn.addEventListener('click', () => {
-                const nickname = nicknameInput.value.trim() || '匿名用戶';
-                showMainContent(nickname);
-            });
-
-            // 顯示主要內容
-            function showMainContent(nickname) {
-                // 儲存用戶資訊
-                localStorage.setItem('userNickname', nickname);
-
-                // 隱藏登入頁面
-                loginPage.classList.remove('active');
-
-                // 顯示心情記錄頁面
-                document.getElementById('page-mood').classList.add('active');
-
-                // 添加用戶資訊
-                const userInfo = document.createElement('div');
-                userInfo.className = 'user-info';
-                userInfo.innerHTML = `
-                    <div class="user-avatar">${nickname === '匿名用戶' ? '?' : nickname.charAt(0)}</div>
-                    <span class="user-name">${nickname}</span>
-                    <div class="user-menu">
-                        <div class="menu-item logout">
-                            <span class="menu-icon">⭘</span>
-                            <span>登出</span>
-                        </div>
-                    </div>
-                `;
-                document.querySelector('.container').appendChild(userInfo);
-
-                // 綁定用戶資訊點擊事件
-                userInfo.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    userInfo.classList.toggle('menu-open');
-                });
-
-                // 綁定登出按鈕點擊事件
-                const logoutBtn = userInfo.querySelector('.menu-item.logout');
-                logoutBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (confirm('確定要登出嗎？')) {
-                        exitApplication();
                     }
                 });
 
-                // 點擊其他地方關閉選單
-                document.addEventListener('click', () => {
-                    const userInfo = document.querySelector('.user-info');
-                    if (userInfo) {
-                        userInfo.classList.remove('menu-open');
-                    }
-                });
-            }
+                function showHistoryNotice() {
+                    // 創建通知元素
+                    const notice = document.createElement('div');
+                    notice.className = 'history-notice';
+                    notice.innerHTML = `
+                        <span>查看歷史紀錄中</span>
+                        <span class="notice-timer">5</span>
+                    `;
+                    document.body.appendChild(notice);
 
-            function showConfirmationDialog() {
-                // 創建對話框元素
-                const overlay = document.createElement('div');
-                overlay.className = 'dialog-overlay';
+                    // 延遲一下再顯示，讓過渡效果生效
+                    setTimeout(() => {
+                        notice.classList.add('show');
+                    }, 100);
 
-                const dialog = document.createElement('div');
-                dialog.className = 'confirmation-dialog';
+                    let timeLeft = 5;
+                    const timer = notice.querySelector('.notice-timer');
 
-                let timeLeft = 10;
+                    // 設置計時器
+                    const countdown = setInterval(() => {
+                        timeLeft--;
+                        timer.textContent = timeLeft;
 
-                dialog.innerHTML = `
-                    <div class="dialog-title">完成紀錄</div>
-                    <div class="dialog-message">是否要繼續使用？</div>
-                    <div class="timer">${timeLeft}</div>
-                    <div class="dialog-buttons">
-                        <button class="dialog-btn continue-btn">繼續使用</button>
-                        <button class="dialog-btn exit-btn">結束使用</button>
-                    </div>
-                `;
-
-                document.body.appendChild(overlay);
-                document.body.appendChild(dialog);
-
-                // 設置計時器
-                const timer = dialog.querySelector('.timer');
-                const countdown = setInterval(() => {
-                    timeLeft--;
-                    timer.textContent = timeLeft;
-
-                    if (timeLeft <= 0) {
-                        clearInterval(countdown);
-                        exitApplication();
-                    }
-                }, 1000);
-
-                // 綁定按鈕事件
-                const continueBtn = dialog.querySelector('.continue-btn');
-                const exitBtn = dialog.querySelector('.exit-btn');
-
-                continueBtn.addEventListener('click', () => {
-                    clearInterval(countdown);
-                    overlay.remove();
-                    dialog.remove();
-                });
-
-                exitBtn.addEventListener('click', () => {
-                    clearInterval(countdown);
-                    exitApplication();
-                });
-            }
-
-            function exitApplication() {
-                // 清除當前頁面狀態
-                selectedMood = '';
-                selectedScenarios.clear();
-                noteInput.value = '';
-                document.querySelectorAll('.mood-card').forEach(card => card.classList.remove('selected'));
-                document.querySelectorAll('.scenario-tag').forEach(tag => tag.classList.remove('selected'));
-
-                // 移除所有對話框
-                const overlay = document.querySelector('.dialog-overlay');
-                const dialog = document.querySelector('.confirmation-dialog');
-                if (overlay) overlay.remove();
-                if (dialog) dialog.remove();
-
-                // 清除歷史通知
-                const notice = document.querySelector('.history-notice');
-                if (notice) notice.remove();
-
-                // 切換到登入頁面
-                Object.values(pages).forEach(page => page.classList.remove('active'));
-                document.getElementById('login-page').classList.add('active');
-
-                // 移除用戶資訊顯示
-                const userInfo = document.querySelector('.user-info');
-                if (userInfo) userInfo.remove();
-
-                // 清空暱稱輸入框
-                const nicknameInput = document.getElementById('nickname');
-                if (nicknameInput) {
-                    nicknameInput.value = '';
-                }
-
-                // 重置登入頁面狀態
-                const startBtn = document.getElementById('start-btn');
-                if (startBtn) {
-                    startBtn.classList.remove('active');
-                }
-
-                // 添加歡迎回來的提示
-                showWelcomeBackMessage();
-            }
-
-            function showWelcomeBackMessage() {
-                const welcomeTitle = document.querySelector('.welcome-title');
-                if (welcomeTitle) {
-                    welcomeTitle.textContent = '歡迎回來';
-
-                    // 添加提示文字
-                    let hintText = document.querySelector('.login-hint');
-                    if (!hintText) {
-                        hintText = document.createElement('p');
-                        hintText.className = 'login-hint';
-                        welcomeTitle.insertAdjacentElement('afterend', hintText);
-                    }
-                    hintText.textContent = '請輸入新的暱稱或選擇匿名使用';
-                }
-            }
-
-            // 修改完成紀錄按鈕的點擊事件
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('finish-record-btn')) {
-                    // 切換到心情記錄頁面
-                    const moodPageButton = document.querySelector('[data-page="page-mood"]');
-                    if (moodPageButton) {
-                        moodPageButton.click();
-
-                        // 確保歷史記錄是最新的
-                        updateHistory();
-
-                        // 滾動到歷史記錄區域
-                        const historyContainer = document.getElementById('history-container');
-                        if (historyContainer) {
+                        if (timeLeft <= 0) {
+                            clearInterval(countdown);
+                            notice.classList.remove('show');
                             setTimeout(() => {
-                                historyContainer.scrollIntoView({ behavior: 'smooth' });
-                                // 顯示歷史記錄查看通知
-                                showHistoryNotice();
-                            }, 100);
+                                notice.remove();
+                                showConfirmationDialog();
+                            }, 300);
                         }
-                    }
+                    }, 1000);
                 }
-            });
 
-            function showHistoryNotice() {
-                // 創建通知元素
-                const notice = document.createElement('div');
-                notice.className = 'history-notice';
-                notice.innerHTML = `
-                    <span>查看歷史紀錄中</span>
-                    <span class="notice-timer">5</span>
-                `;
-                document.body.appendChild(notice);
-
-                // 延遲一下再顯示，讓過渡效果生效
-                setTimeout(() => {
-                    notice.classList.add('show');
-                }, 100);
-
-                let timeLeft = 5;
-                const timer = notice.querySelector('.notice-timer');
-
-                // 設置計時器
-                const countdown = setInterval(() => {
-                    timeLeft--;
-                    timer.textContent = timeLeft;
-
-                    if (timeLeft <= 0) {
-                        clearInterval(countdown);
-                        notice.classList.remove('show');
-                        setTimeout(() => {
-                            notice.remove();
-                            showConfirmationDialog();
-                        }, 300);
-                    }
-                }, 1000);
-            }
-
-            function showConfirmationDialog() {
-                // 創建對話框元素
-                const overlay = document.createElement('div');
-                overlay.className = 'dialog-overlay';
-                overlay.style.opacity = '0';
-
-                const dialog = document.createElement('div');
-                dialog.className = 'confirmation-dialog';
-                dialog.style.opacity = '0';
-                dialog.style.transform = 'translate(-50%, -60%)';
-
-                let timeLeft = 5;
-
-                dialog.innerHTML = `
-                    <div class="dialog-title">完成紀錄</div>
-                    <div class="dialog-message">是否要繼續使用？</div>
-                    <div class="timer">${timeLeft}</div>
-                    <div class="dialog-buttons">
-                        <button class="dialog-btn continue-btn">繼續使用</button>
-                        <button class="dialog-btn exit-btn">結束使用</button>
-                    </div>
-                `;
-
-                document.body.appendChild(overlay);
-                document.body.appendChild(dialog);
-
-                // 使用 requestAnimationFrame 來確保過渡效果
-                requestAnimationFrame(() => {
-                    overlay.style.opacity = '1';
-                    dialog.style.opacity = '1';
-                    dialog.style.transform = 'translate(-50%, -50%)';
-                });
-
-                // 設置計時器
-                const timer = dialog.querySelector('.timer');
-                const countdown = setInterval(() => {
-                    timeLeft--;
-                    timer.textContent = timeLeft;
-
-                    if (timeLeft <= 0) {
-                        clearInterval(countdown);
-                        exitApplication();
-                    }
-                }, 1000);
-
-                // 綁定按鈕事件
-                const continueBtn = dialog.querySelector('.continue-btn');
-                const exitBtn = dialog.querySelector('.exit-btn');
-
-                continueBtn.addEventListener('click', () => {
-                    clearInterval(countdown);
+                function showConfirmationDialog() {
+                    // 創建對話框元素
+                    const overlay = document.createElement('div');
+                    overlay.className = 'dialog-overlay';
                     overlay.style.opacity = '0';
+
+                    const dialog = document.createElement('div');
+                    dialog.className = 'confirmation-dialog';
                     dialog.style.opacity = '0';
                     dialog.style.transform = 'translate(-50%, -60%)';
-                    setTimeout(() => {
-                        overlay.remove();
-                        dialog.remove();
-                    }, 300);
-                });
 
-                exitBtn.addEventListener('click', () => {
-                    clearInterval(countdown);
-                    exitApplication();
-                });
-            }
+                    let timeLeft = 5;
 
-            function bindClearHistoryEvents() {
-                const clearBtn = document.querySelector('.clear-history-btn');
-                const passwordDialog = document.querySelector('.password-dialog');
-                const passwordInput = document.querySelector('.password-input');
-                const confirmBtn = document.querySelector('.confirm-password');
-                const cancelBtn = document.querySelector('.cancel-password');
-                const errorMessage = document.querySelector('.error-message');
-                const overlay = document.querySelector('.dialog-overlay') || createOverlay();
+                    dialog.innerHTML = `
+                        <div class="dialog-title">完成紀錄</div>
+                        <div class="dialog-message">是否要繼續使用？</div>
+                        <div class="timer">${timeLeft}</div>
+                        <div class="dialog-buttons">
+                            <button class="dialog-btn continue-btn">繼續使用</button>
+                            <button class="dialog-btn exit-btn">結束使用</button>
+                        </div>
+                    `;
 
-                clearBtn.addEventListener('click', () => {
-                    overlay.style.display = 'block';
-                    passwordDialog.classList.add('show');
-                    passwordInput.value = '';
-                    errorMessage.classList.remove('show');
-                });
+                    document.body.appendChild(overlay);
+                    document.body.appendChild(dialog);
 
-                confirmBtn.addEventListener('click', () => {
-                    const password = passwordInput.value;
-                    if (password === '931106') {
-                        localStorage.removeItem('moodHistory');
+                    // 使用 requestAnimationFrame 來確保過渡效果
+                    requestAnimationFrame(() => {
+                        overlay.style.opacity = '1';
+                        dialog.style.opacity = '1';
+                        dialog.style.transform = 'translate(-50%, -50%)';
+                    });
+
+                    // 設置計時器
+                    const timer = dialog.querySelector('.timer');
+                    const countdown = setInterval(() => {
+                        timeLeft--;
+                        timer.textContent = timeLeft;
+
+                        if (timeLeft <= 0) {
+                            clearInterval(countdown);
+                            exitApplication();
+                        }
+                    }, 1000);
+
+                    // 綁定按鈕事件
+                    const continueBtn = dialog.querySelector('.continue-btn');
+                    const exitBtn = dialog.querySelector('.exit-btn');
+
+                    continueBtn.addEventListener('click', () => {
+                        clearInterval(countdown);
+                        overlay.style.opacity = '0';
+                        dialog.style.opacity = '0';
+                        dialog.style.transform = 'translate(-50%, -60%)';
+                        setTimeout(() => {
+                            overlay.remove();
+                            dialog.remove();
+                        }, 300);
+                    });
+
+                    exitBtn.addEventListener('click', () => {
+                        clearInterval(countdown);
+                        exitApplication();
+                    });
+                }
+
+                function bindClearHistoryEvents() {
+                    const clearBtn = document.querySelector('.clear-history-btn');
+                    const passwordDialog = document.querySelector('.password-dialog');
+                    const passwordInput = document.querySelector('.password-input');
+                    const confirmBtn = document.querySelector('.confirm-password');
+                    const cancelBtn = document.querySelector('.cancel-password');
+                    const errorMessage = document.querySelector('.error-message');
+                    const overlay = document.querySelector('.dialog-overlay') || createOverlay();
+
+                    clearBtn.addEventListener('click', () => {
+                        overlay.style.display = 'block';
+                        passwordDialog.classList.add('show');
+                        passwordInput.value = '';
+                        errorMessage.classList.remove('show');
+                    });
+
+                    confirmBtn.addEventListener('click', () => {
+                        const password = passwordInput.value;
+                        if (password === '931106') {
+                            localStorage.removeItem('moodHistory');
+                            passwordDialog.classList.remove('show');
+                            overlay.style.display = 'none';
+                            updateHistory();
+                            alert('所有記錄已清空');
+                        } else {
+                            errorMessage.classList.add('show');
+                            passwordInput.value = '';
+                            passwordInput.focus();
+                        }
+                    });
+
+                    cancelBtn.addEventListener('click', () => {
                         passwordDialog.classList.remove('show');
                         overlay.style.display = 'none';
-                        updateHistory();
-                        alert('所有記錄已清空');
-                    } else {
-                        errorMessage.classList.add('show');
-                        passwordInput.value = '';
-                        passwordInput.focus();
-                    }
-                });
-
-                cancelBtn.addEventListener('click', () => {
-                    passwordDialog.classList.remove('show');
-                    overlay.style.display = 'none';
-                    errorMessage.classList.remove('show');
-                });
-
-                // 按 Enter 鍵確認
-                passwordInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        confirmBtn.click();
-                    }
-                });
-            }
-
-            function createOverlay() {
-                const overlay = document.createElement('div');
-                overlay.className = 'dialog-overlay';
-                overlay.style.display = 'none';
-                document.body.appendChild(overlay);
-                return overlay;
-            }
-
-            function bindSongClickEvents() {
-                const songLinks = document.querySelectorAll('.song-link');
-                const songCard = document.querySelector('.song-card');
-                const closeCard = document.querySelector('.close-card');
-                const overlay = document.querySelector('.dialog-overlay') || createOverlay();
-
-                songLinks.forEach(link => {
-                    link.addEventListener('click', () => {
-                        const songData = JSON.parse(link.dataset.song);
-                        const songInfo = songCard.querySelector('.song-info');
-
-                        songInfo.innerHTML = `
-                            <div class="song-info-item">
-                                <div class="info-label">歌曲名稱</div>
-                                <div class="info-value">${songData.songName}</div>
-                            </div>
-                            <div class="song-info-item">
-                                <div class="info-label">使用者</div>
-                                <div class="info-value">${songData.nickname}</div>
-                            </div>
-                            <div class="song-info-item">
-                                <div class="info-label">情緒標籤</div>
-                                <div class="info-value">
-                                    <span class="emotion-tag">${songData.emotion}</span>
-                                </div>
-                            </div>
-                            <div class="song-info-item">
-                                <div class="info-label">記錄時間</div>
-                                <div class="info-value">${new Date(songData.timestamp).toLocaleString()}</div>
-                            </div>
-                        `;
-
-                        overlay.style.display = 'block';
-                        songCard.classList.add('show');
+                        errorMessage.classList.remove('show');
                     });
-                });
 
-                closeCard.addEventListener('click', () => {
-                    songCard.classList.remove('show');
+                    // 按 Enter 鍵確認
+                    passwordInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            confirmBtn.click();
+                        }
+                    });
+                }
+
+                function createOverlay() {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'dialog-overlay';
                     overlay.style.display = 'none';
-                });
+                    document.body.appendChild(overlay);
+                    return overlay;
+                }
 
-                // 點擊遮罩層關閉卡片
-                overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) {
+                function bindSongClickEvents() {
+                    const songLinks = document.querySelectorAll('.song-link');
+                    const songCard = document.querySelector('.song-card');
+                    const closeCard = document.querySelector('.close-card');
+                    const overlay = document.querySelector('.dialog-overlay') || createOverlay();
+
+                    songLinks.forEach(link => {
+                        link.addEventListener('click', () => {
+                            const songData = JSON.parse(link.dataset.song);
+                            const songInfo = songCard.querySelector('.song-info');
+
+                            songInfo.innerHTML = `
+                                <div class="song-info-item">
+                                    <div class="info-label">歌曲名稱</div>
+                                    <div class="info-value">${songData.songName}</div>
+                                </div>
+                                <div class="song-info-item">
+                                    <div class="info-label">使用者</div>
+                                    <div class="info-value">${songData.nickname}</div>
+                                </div>
+                                <div class="song-info-item">
+                                    <div class="info-label">情緒標籤</div>
+                                    <div class="info-value">
+                                        <span class="emotion-tag">${songData.emotion}</span>
+                                    </div>
+                                </div>
+                                <div class="song-info-item">
+                                    <div class="info-label">記錄時間</div>
+                                    <div class="info-value">${new Date(songData.timestamp).toLocaleString()}</div>
+                                </div>
+                            `;
+
+                            overlay.style.display = 'block';
+                            songCard.classList.add('show');
+                        });
+                    });
+
+                    closeCard.addEventListener('click', () => {
                         songCard.classList.remove('show');
                         overlay.style.display = 'none';
-                    }
-                });
-            }
-
-            function bindHistorySongEvents() {
-                const songLinks = document.querySelectorAll('.history-song-link');
-                const songCard = document.querySelector('.history-song-card');
-                const closeCard = document.querySelector('.close-history-card');
-                const overlay = document.querySelector('.dialog-overlay');
-
-                songLinks.forEach(link => {
-                    link.addEventListener('click', () => {
-                        const songData = JSON.parse(link.dataset.song);
-                        const songInfo = songCard.querySelector('.history-song-info');
-
-                        songInfo.innerHTML = `
-                            <div class="history-info-item">
-                                <div class="history-info-label">歌曲名稱</div>
-                                <div class="history-info-value">${songData.songName}</div>
-                            </div>
-                            <div class="history-info-item">
-                                <div class="history-info-label">使用者</div>
-                                <div class="history-info-value">${songData.nickname || '匿名'}</div>
-                            </div>
-                            <div class="history-info-item">
-                                <div class="history-info-label">情緒標籤</div>
-                                <div class="history-info-value">
-                                    <span class="history-emotion-tag">${songData.emotion}</span>
-                                </div>
-                            </div>
-                            <div class="history-info-item">
-                                <div class="history-info-label">記錄時間</div>
-                                <div class="history-info-value">${new Date(songData.timestamp).toLocaleString()}</div>
-                            </div>
-                        `;
-
-                        overlay.style.display = 'block';
-                        songCard.classList.add('show');
                     });
-                });
 
-                closeCard.addEventListener('click', () => {
-                    songCard.classList.remove('show');
-                    overlay.style.display = 'none';
-                });
+                    // 點擊遮罩層關閉卡片
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            songCard.classList.remove('show');
+                            overlay.style.display = 'none';
+                        }
+                    });
+                }
 
-                overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) {
+                function bindHistorySongEvents() {
+                    const songLinks = document.querySelectorAll('.history-song-link');
+                    const songCard = document.querySelector('.history-song-card');
+                    const closeCard = document.querySelector('.close-history-card');
+                    const overlay = document.querySelector('.dialog-overlay');
+
+                    songLinks.forEach(link => {
+                        link.addEventListener('click', () => {
+                            const songData = JSON.parse(link.dataset.song);
+                            const songInfo = songCard.querySelector('.history-song-info');
+
+                            songInfo.innerHTML = `
+                                <div class="history-info-item">
+                                    <div class="history-info-label">歌曲名稱</div>
+                                    <div class="history-info-value">${songData.songName}</div>
+                                </div>
+                                <div class="history-info-item">
+                                    <div class="history-info-label">使用者</div>
+                                    <div class="history-info-value">${songData.nickname || '匿名'}</div>
+                                </div>
+                                <div class="history-info-item">
+                                    <div class="history-info-label">情緒標籤</div>
+                                    <div class="history-info-value">
+                                        <span class="history-emotion-tag">${songData.emotion}</span>
+                                    </div>
+                                </div>
+                                <div class="history-info-item">
+                                    <div class="history-info-label">記錄時間</div>
+                                    <div class="history-info-value">${new Date(songData.timestamp).toLocaleString()}</div>
+                                </div>
+                            `;
+
+                            overlay.style.display = 'block';
+                            songCard.classList.add('show');
+                        });
+                    });
+
+                    closeCard.addEventListener('click', () => {
                         songCard.classList.remove('show');
                         overlay.style.display = 'none';
-                    }
-                });
-            }
-        });
+                    });
+
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            songCard.classList.remove('show');
+                            overlay.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        }
+        // 檢查 XLSX 是否載入，載入後才執行 main
+        if (typeof XLSX === 'undefined') {
+            window.addEventListener('load', function () {
+                if (typeof XLSX === 'undefined') {
+                    alert('XLSX 函式庫載入失敗，請檢查網路或瀏覽器設定！');
+                } else {
+                    main();
+                }
+            });
+        } else {
+            main();
+        }
     </script>
 </body>
 
