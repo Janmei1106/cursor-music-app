@@ -34,29 +34,23 @@ def upload_excel():
         if file.filename == '':
             return jsonify({'error': '沒有選擇檔案'}), 400
         
-        if file and allowed_file(file.filename):
-            # 儲存檔案
-            filepath = os.path.join(UPLOAD_FOLDER, 'music_database.xlsx')
-            file.save(filepath)
-            
-            # 讀取Excel檔案
-            df = pd.read_excel(filepath)
-            
-            # 轉換為JSON格式
-            data = df.to_dict(orient='records')
-            
-            return jsonify({
-                'message': '檔案上傳成功',
-                'data': data
-            })
-            
-        return jsonify({'error': '不支援的檔案類型'}), 400
+        # 儲存並讀取 Excel 檔案
+        file.save(DB_FILE)
+        df = pd.read_excel(DB_FILE)
+        
+        # 驗證必要欄位
+        required_columns = ['歌名', '歌手', '情緒', '語言', '點閱率', 'YouTube連結']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            return jsonify({'error': f'缺少必要欄位：{", ".join(missing_columns)}'}), 400
+        
+        # 將資料轉換為字典列表
+        songs = df.to_dict('records')
+        return jsonify({'message': '檔案上傳成功', 'songs': songs})
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']
 
 @app.route('/get_songs', methods=['GET'])
 def get_songs():
@@ -96,17 +90,9 @@ def save_mood():
 @app.route('/get_mood_history', methods=['GET'])
 def get_mood_history():
     try:
-        nickname = request.args.get('nickname')
-        
-        if os.path.exists(MOOD_HISTORY_FILE):
-            with open(MOOD_HISTORY_FILE, 'r', encoding='utf-8') as f:
-                history = json.load(f)
-                
-                if nickname:
-                    history = [entry for entry in history if entry.get('nickname') == nickname]
-                
-                return jsonify(history)
-        return jsonify([])
+        with open(MOOD_HISTORY_FILE, 'r', encoding='utf-8') as f:
+            mood_history = json.load(f)
+        return jsonify(mood_history)
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -143,25 +129,5 @@ def update_song_rating():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def static_files(filename):
-    return send_from_directory('.', filename)
-
-@app.route('/clear_history', methods=['POST'])
-def clear_history():
-    try:
-        password = request.json.get('password')
-        
-        if password != '931106':
-            return jsonify({'error': '密碼錯誤'}), 403
-        
-        # 清空歷史記錄
-        with open(MOOD_HISTORY_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f, ensure_ascii=False)
-        
-        return jsonify({'message': '歷史記錄已清空'})
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) 
