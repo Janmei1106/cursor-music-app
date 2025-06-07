@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>每日情緒記錄與音樂</title>
-    <!-- SheetJS CDN 改用 jsDelivr 並加 onerror -->
+    <!-- 將原本的 SheetJS CDN 換成 jsDelivr 並加 onerror 提示 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"
         onerror="alert('XLSX 載入失敗，請檢查網路或瀏覽器設定！')"></script>
     <style>
@@ -2167,7 +2167,7 @@
     </div>
 
     <script>
-        // 將主程式包進 main()
+        // 將主程式包在 XLSX 載入檢查內，確保兩個瀏覽器都能用
         function main() {
             document.addEventListener('DOMContentLoaded', () => {
                 const pages = {
@@ -3871,7 +3871,6 @@
                 }
             });
         }
-        // 檢查 XLSX 是否載入，載入後才執行 main
         if (typeof XLSX === 'undefined') {
             window.addEventListener('load', function () {
                 if (typeof XLSX === 'undefined') {
